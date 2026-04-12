@@ -1,6 +1,6 @@
 /**
  * @file main.js
- * @descriptihttps://vstra-backend.onrender.comon VSTRA Store Logic.
+ * @description VSTRA Store Logic. (Updated for Render Backend & MySQL keys)
  */
 
 let allProducts = [];
@@ -10,7 +10,8 @@ let allProducts = [];
  */
 async function initStorefront() {
     try {
-        const res = await fetch('/api/products');
+        // 🌟 FIX 1: Use the full Render Backend URL
+        const res = await fetch('https://vstra-backend.onrender.com/api/products');
         allProducts = await res.json();
         
         // Render all sections
@@ -19,7 +20,7 @@ async function initStorefront() {
         const statusText = document.getElementById('status-text');
         if(statusText) statusText.innerText = "System Sync: Connected";
     } catch (err) {
-        console.error("VSTRA: Backend Connection Failed.");
+        console.error("VSTRA: Backend Connection Failed.", err);
     }
 }
 
@@ -27,9 +28,10 @@ async function initStorefront() {
  * Maps database items to the corresponding HTML grids.
  */
 function displayInventory(products) {
-    renderProductGrid('featured-grid', products.filter(p => p.category === 'featured'));
-    renderProductGrid('men-grid', products.filter(p => p.category === 'men'));
-    renderProductGrid('women-grid', products.filter(p => p.category === 'women'));
+    // 🌟 FIX 2: Made category filtering robust and case-insensitive
+    renderProductGrid('featured-grid', products.filter(p => (p.category || "").toLowerCase().includes('featured')));
+    renderProductGrid('men-grid', products.filter(p => (p.category || "").toLowerCase().includes('men')));
+    renderProductGrid('women-grid', products.filter(p => (p.category || "").toLowerCase().includes('women')));
 }
 
 /**
@@ -39,15 +41,16 @@ function renderProductGrid(id, products) {
     const grid = document.getElementById(id);
     if (!grid) return; // Safeguard if ID is missing in HTML
 
+    // 🌟 FIX 3: Changed p.title to p.name, p.affiliate_link to p.purchase_link, and added MRP
     grid.innerHTML = products.map(p => `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100">
                 <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/300x400?text=VSTRA'"
                      class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
             </div>
-            <h3 class="text-[10px] font-bold uppercase truncate mb-1 text-gray-800">${p.title}</h3>
-            <p class="font-bold text-xs mb-3">₹${p.price}</p>
-            <button onclick="handlePurchase('${p.affiliate_link}')" 
+            <h3 class="text-[10px] font-bold uppercase truncate mb-1 text-gray-800">${p.name}</h3>
+            <p class="font-bold text-xs mb-3">₹${p.price} <span class="text-[9px] text-gray-400 line-through ml-1">₹${p.mrp || 0}</span></p>
+            <button onclick="handlePurchase('${p.purchase_link}')" 
                     class="w-full py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all">
                 Buy Now
             </button>
@@ -62,8 +65,10 @@ window.handleSearch = (e) => {
     const searchArea = document.getElementById('search-info');
     
     if (query.length > 0) {
+        // 🌟 FIX 4: Changed p.title to p.name in search logic
         const results = allProducts.filter(p => 
-            p.title.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)
+            (p.name && p.name.toLowerCase().includes(query)) || 
+            (p.category && p.category.toLowerCase().includes(query))
         );
         storefront.classList.add('hidden');
         searchArea.classList.remove('hidden');
