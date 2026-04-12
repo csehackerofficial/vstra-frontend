@@ -1,6 +1,6 @@
 /**
  * @file main.js
- * @description VSTRA Store Logic. (Updated for Render Backend & MySQL keys)
+ * @description VSTRA Store Logic. (Updated for Precise Category Filtering)
  */
 
 let allProducts = [];
@@ -10,7 +10,6 @@ let allProducts = [];
  */
 async function initStorefront() {
     try {
-        // 🌟 FIX 1: Use the full Render Backend URL
         const res = await fetch('https://vstra-backend.onrender.com/api/products');
         allProducts = await res.json();
         
@@ -28,10 +27,26 @@ async function initStorefront() {
  * Maps database items to the corresponding HTML grids.
  */
 function displayInventory(products) {
-    // 🌟 FIX 2: Made category filtering robust and case-insensitive
-    renderProductGrid('featured-grid', products.filter(p => (p.category || "").toLowerCase().includes('featured')));
-    renderProductGrid('men-grid', products.filter(p => (p.category || "").toLowerCase().includes('men')));
-    renderProductGrid('women-grid', products.filter(p => (p.category || "").toLowerCase().includes('women')));
+    // 🌟 FIX: Using strict comparison (===) to prevent 'men' inside 'women' mismatch
+    
+    // Featured के लिए अभी भी includes रख रहे हैं क्योंकि ये एक टैग जैसा है
+    const featuredItems = products.filter(p => 
+        (p.category || "").toLowerCase().includes('featured')
+    );
+
+    // Men के लिए Exact Match: ताकि wo'men' वाले इसमें न आएं
+    const menItems = products.filter(p => 
+        (p.category || "").toLowerCase().trim() === 'men'
+    );
+
+    // Women के लिए Exact Match
+    const womenItems = products.filter(p => 
+        (p.category || "").toLowerCase().trim() === 'women'
+    );
+
+    renderProductGrid('featured-grid', featuredItems);
+    renderProductGrid('men-grid', menItems);
+    renderProductGrid('women-grid', womenItems);
 }
 
 /**
@@ -39,9 +54,8 @@ function displayInventory(products) {
  */
 function renderProductGrid(id, products) {
     const grid = document.getElementById(id);
-    if (!grid) return; // Safeguard if ID is missing in HTML
+    if (!grid) return; 
 
-    // 🌟 FIX 3: Changed p.title to p.name, p.affiliate_link to p.purchase_link, and added MRP
     grid.innerHTML = products.map(p => `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100">
@@ -65,7 +79,6 @@ window.handleSearch = (e) => {
     const searchArea = document.getElementById('search-info');
     
     if (query.length > 0) {
-        // 🌟 FIX 4: Changed p.title to p.name in search logic
         const results = allProducts.filter(p => 
             (p.name && p.name.toLowerCase().includes(query)) || 
             (p.category && p.category.toLowerCase().includes(query))
