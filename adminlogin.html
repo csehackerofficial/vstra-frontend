@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VSTRA | Admin User Management</title>
+    <title>VASTRA | Admin User Management</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -12,15 +12,11 @@
         /* UI DESIGN SYSTEM: MONOCHROME */
         body { background-color: #ffffff; color: #000; }
         
-        /* BRAND LOGO ANIMATION (ASTRA Logic) */
-        .a-box { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid #000; }
-        .a-letter { 
-            display: inline-block; 
-            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
-            transform: rotate(180deg); 
-        }
-        .logo-group:hover .a-letter { transform: rotate(0deg); }
-        .logo-group:hover .a-box { border-radius: 50%; background: #000; color: #fff; }
+        /* 🚀 NEW: EXPANDING LOGO ANIMATION (V -> VASTRA) */
+        .logo-container { display: flex; align-items: center; cursor: pointer; overflow: hidden; padding-right: 5px; }
+        .logo-box { width: 32px; height: 32px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; transition: all 0.4s ease-in-out; z-index: 2; }
+        .logo-text-hidden { max-width: 0; opacity: 0; font-weight: bold; font-size: 1.125rem; letter-spacing: -0.05em; white-space: nowrap; transition: all 0.4s ease-in-out; transform: translateX(-10px); color: #000; }
+        .logo-container:hover .logo-text-hidden { max-width: 100px; opacity: 1; transform: translateX(5px); }
 
         /* Professional Table Styling */
         th { border-bottom: 2px solid #000; font-size: 10px; letter-spacing: 0.2em; }
@@ -33,18 +29,16 @@
     <nav class="border-b-2 border-black h-20 sticky top-0 bg-white z-50">
         <div class="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
             
-            <div class="flex items-center gap-3 cursor-pointer logo-group" onclick="window.location.href='index.html'">
-                <div class="a-box w-10 h-10 flex items-center justify-center font-black text-xl bg-black text-white">
-                    <span class="a-letter">V</span>
-                </div>
-                <span class="text-xl font-black uppercase italic tracking-tighter">STRA Admin</span>
+            <div class="logo-container" onclick="window.location.href='index.html'">
+                <div class="logo-box">V</div>
+                <div class="logo-text-hidden">ASTRA</div>
             </div>
 
             <div class="flex items-center gap-6">
                 <button onclick="loadUsers()" class="text-[10px] font-black uppercase border-b-2 border-black pb-1 hover:opacity-50 transition-all">
                     <i class="ri-refresh-line mr-1"></i> Sync Database
                 </button>
-                <a href="admin.html" class="bg-black text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all">
+                <a href="admin.html" class="bg-black text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all rounded">
                     Product Manager
                 </a>
             </div>
@@ -72,7 +66,7 @@
                     </tr>
                 </thead>
                 <tbody id="userTable">
-                    </tbody>
+                </tbody>
             </table>
 
             <div id="loading-state" class="text-center py-20 hidden">
@@ -82,10 +76,6 @@
     </main>
 
     <script>
-        /**
-         * Fetches all registered users from the VSTRA Backend.
-         * Maps database records to the administrative UI.
-         */
         async function loadUsers() {
             const tableBody = document.getElementById("userTable");
             const loader = document.getElementById("loading-state");
@@ -94,10 +84,11 @@
             loader.classList.remove("hidden");
 
             try {
-                // Connecting to the Global API Gateway
+                // 🌟 अब यह लिंक काम करेगा क्योंकि हमने बैकएंड में रूट ऐड कर दिया है
                 const response = await fetch("https://vstra-backend.onrender.com/api/users");
+                if (!response.ok) throw new Error("Network response was not ok");
+                
                 const users = await response.json();
-
                 loader.classList.add("hidden");
 
                 if (users.length === 0) {
@@ -105,7 +96,6 @@
                     return;
                 }
 
-                // Rendering the User Stream
                 tableBody.innerHTML = users.map(user => {
                     const registrationDate = new Date(user.created_at).toLocaleDateString('en-GB', {
                         day: '2-digit', month: 'short', year: 'numeric'
@@ -127,7 +117,7 @@
             } catch (err) {
                 loader.classList.add("hidden");
                 console.error("Critical: Registry Sync Failed.", err);
-                alert("VSTRA Error: Database Connection Refused.");
+                alert("Database Sync Failed. Please wait for the Render server to wake up.");
             }
         }
 
