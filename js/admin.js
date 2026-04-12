@@ -1,19 +1,26 @@
 /**
  * @file admin.js
  * @description Administrative Logic for VASTRA Team.
- * Optimized for Products and Dynamic Banners.
+ * Optimized for Products and Dynamic Banners (Bug Fixed).
  */
 
 let allAdminProducts = []; 
 let editingProductId = null; 
 
-// --- 1. General Modal Control (Explicitly sets state) ---
+// --- 1. BULLETPROOF MODAL CONTROL ---
 window.toggleModal = (modalId, show) => {
+    // 🌟 FIX: नया फॉर्म खोलने से पहले, पुराने सारे फॉर्म जबरदस्ती बंद करो ताकि Overlap न हो
+    if (show) {
+        document.getElementById('productModal').style.display = 'none';
+        document.getElementById('bannerModal').style.display = 'none';
+    }
+
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = show ? 'flex' : 'none';
+        
+        // जब फॉर्म बंद हो, तो उसका पुराना लिखा हुआ डेटा साफ़ कर दो
         if (!show) {
-            // Close logic
             if(modalId === 'productModal') {
                 document.getElementById('admin-form').reset();
                 editingProductId = null; 
@@ -142,7 +149,7 @@ window.deleteBanner = async (id) => {
     }
 };
 
-// --- INITIAL LOAD (Only fetches data, no UI opens) ---
+// --- INITIAL LOAD ---
 document.addEventListener('DOMContentLoaded', () => {
     loadInventory();
     loadBanners();
