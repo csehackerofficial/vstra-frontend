@@ -7,12 +7,13 @@
 let allAdminProducts = []; 
 let editingProductId = null; 
 
-// --- 1. General Modal Control ---
+// --- 1. General Modal Control (Explicitly sets state) ---
 window.toggleModal = (modalId, show) => {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = show ? 'flex' : 'none';
         if (!show) {
+            // Close logic
             if(modalId === 'productModal') {
                 document.getElementById('admin-form').reset();
                 editingProductId = null; 
@@ -141,7 +142,7 @@ window.deleteBanner = async (id) => {
     }
 };
 
-// Initial Load
+// --- INITIAL LOAD (Only fetches data, no UI opens) ---
 document.addEventListener('DOMContentLoaded', () => {
     loadInventory();
     loadBanners();
