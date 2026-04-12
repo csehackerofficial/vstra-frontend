@@ -1,57 +1,95 @@
 /**
  * @file main.js
- * @description VSTRA Store Logic. (Updated for Precise Category Filtering)
+ * @description VASTRA Store Logic. (Updated for Dynamic Banners)
  */
 
 let allProducts = [];
 
-/**
- * Initializes the storefront and fetches global inventory.
- */
-async function initStorefront() {
+// --- DYNAMIC SLIDER LOGIC ---
+let currentSlide = 0;
+let sliderTimer;
+
+async function fetchBanners() {
     try {
-        const res = await fetch('https://vstra-backend.onrender.com/api/products');
-        allProducts = await res.json();
+        const res = await fetch('https://vstra-backend.onrender.com/api/banners');
+        const banners = await res.json();
         
-        // Render all sections
-        displayInventory(allProducts);
-        
-        const statusText = document.getElementById('status-text');
-        if(statusText) statusText.innerText = "System Sync: Connected";
-    } catch (err) {
-        console.error("VSTRA: Backend Connection Failed.", err);
+        if (banners.length > 0) {
+            const container = document.getElementById('dynamic-slider-container');
+            const track = document.getElementById('slider-track');
+            const nav = document.getElementById('slider-nav');
+            
+            // Build Slides HTML
+            track.innerHTML = banners.map((b, index) => `
+                <div class="slide ${index === 0 ? 'active' : ''}" 
+                     style="background-image: url('${b.image_url}');"
+                     onclick="window.open('${b.target_link}', '_blank')">
+                </div>
+            `).join('');
+
+            // Build Dots HTML
+            if (banners.length > 1) {
+                nav.innerHTML = banners.map((b, index) => `
+                    <div class="slider-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></div>
+                `).join('');
+            }
+
+            container.classList.remove('hidden'); // Show slider
+            if (banners.length > 1) initSlider(); // Start Auto-slide if more than 1 image
+        }
+    } catch (err) { console.error("Banner fetch failed", err); }
+}
+
+function initSlider() {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    
+    function showSlide(index) {
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+        currentSlide = index;
     }
+
+    function nextSlide() { showSlide((currentSlide + 1) % slides.length); }
+
+    window.goToSlide = (index) => {
+        showSlide(index);
+        clearInterval(sliderTimer);
+        sliderTimer = setInterval(nextSlide, 4000);
+    };
+
+    sliderTimer = setInterval(nextSlide, 4000);
 }
 
 /**
- * Maps database items to the corresponding HTML grids.
+ * Initializes the storefront
  */
-function displayInventory(products) {
-    // 🌟 FIX: Using strict comparison (===) to prevent 'men' inside 'women' mismatch
+async function initStorefront() {
+    fetchBanners(); // Load banners parallel to products
     
-    // Featured के लिए अभी भी includes रख रहे हैं क्योंकि ये एक टैग जैसा है
-    const featuredItems = products.filter(p => 
-        (p.category || "").toLowerCase().includes('featured')
-    );
+    try {
+        const res = await fetch('https://vstra-backend.onrender.com/api/products');
+        allProducts = await res.json();
+        displayInventory(allProducts);
+        const statusText = document.getElementById('status-text');
+        if(statusText) statusText.innerText = "System Sync: Connected";
+    } catch (err) {
+        console.error("VASTRA: Backend Connection Failed.", err);
+    }
+}
 
-    // Men के लिए Exact Match: ताकि wo'men' वाले इसमें न आएं
-    const menItems = products.filter(p => 
-        (p.category || "").toLowerCase().trim() === 'men'
-    );
-
-    // Women के लिए Exact Match
-    const womenItems = products.filter(p => 
-        (p.category || "").toLowerCase().trim() === 'women'
-    );
+function displayInventory(products) {
+    const featuredItems = products.filter(p => (p.category || "").toLowerCase().includes('featured'));
+    const menItems = products.filter(p => (p.category || "").toLowerCase().trim() === 'men');
+    const womenItems = products.filter(p => (p.category || "").toLowerCase().trim() === 'women');
 
     renderProductGrid('featured-grid', featuredItems);
     renderProductGrid('men-grid', menItems);
     renderProductGrid('women-grid', womenItems);
 }
 
-/**
- * Helper to render cards into a target container.
- */
 function renderProductGrid(id, products) {
     const grid = document.getElementById(id);
     if (!grid) return; 
@@ -59,7 +97,7 @@ function renderProductGrid(id, products) {
     grid.innerHTML = products.map(p => `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100">
-                <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/300x400?text=VSTRA'"
+                <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/300x400?text=VASTRA'"
                      class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
             </div>
             <h3 class="text-[10px] font-bold uppercase truncate mb-1 text-gray-800">${p.name}</h3>
@@ -72,38 +110,22 @@ function renderProductGrid(id, products) {
     `).join('');
 }
 
-// Global Search
 window.handleSearch = (e) => {
     const query = e.target.value.toLowerCase().trim();
     const storefront = document.getElementById('storefront-content');
     const searchArea = document.getElementById('search-info');
     
     if (query.length > 0) {
-        const results = allProducts.filter(p => 
-            (p.name && p.name.toLowerCase().includes(query)) || 
-            (p.category && p.category.toLowerCase().includes(query))
-        );
-        storefront.classList.add('hidden');
-        searchArea.classList.remove('hidden');
-        renderProductGrid('search-results-grid', results);
-    } else {
-        clearSearch();
-    }
+        const results = allProducts.filter(p => (p.name && p.name.toLowerCase().includes(query)) || (p.category && p.category.toLowerCase().includes(query)));
+        storefront.classList.add('hidden'); searchArea.classList.remove('hidden'); renderProductGrid('search-results-grid', results);
+    } else { clearSearch(); }
 };
 
-window.clearSearch = () => {
-    document.getElementById('searchInput').value = "";
-    document.getElementById('storefront-content').classList.remove('hidden');
-    document.getElementById('search-info').classList.add('hidden');
-};
+window.clearSearch = () => { document.getElementById('searchInput').value = ""; document.getElementById('storefront-content').classList.remove('hidden'); document.getElementById('search-info').classList.add('hidden'); };
 
 function handlePurchase(link) {
     const user = localStorage.getItem('vastra_user');
-    if (user) {
-        window.open(link, '_blank');
-    } else {
-        window.location.href = 'login.html';
-    }
+    if (user) { window.open(link, '_blank'); } else { window.location.href = 'login.html'; }
 }
 
 document.addEventListener('DOMContentLoaded', initStorefront);
