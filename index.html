@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSTRA | Official Store</title>
+    
+    <style>
+        /* 🖋️ PREMIUM TYPOGRAPHY: AMAZON EMBER */
+        @font-face {
+            font-family: 'Amazon Ember';
+            src: local('Amazon Ember'), url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonEmber-Regular-934f0d2382743818c5483f8d227311394b87e6b0._V1_.woff2') format('woff2');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Amazon Ember';
+            src: local('Amazon Ember Bold'), url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonEmber-Bold-7333a3648a8579471f45600557434190c4273063._V1_.woff2') format('woff2');
+            font-weight: 700;
+        }
+
+        :root { --font-main: 'Amazon Ember', Arial, sans-serif; }
+        body { font-family: var(--font-main); background-color: #fcfcfc; color: #111; }
+
+        /* 🔄 LOGO DYNAMICS: ASTRA CONCEPT */
+        .a-box { transition: 0.5s; border: 1px solid #000; width: 32px; height: 32px; }
+        .a-letter { display: inline-block; transition: 0.6s; transform: rotate(180deg); font-size: 16px; }
+        .logo-group:hover .a-letter { transform: rotate(0deg); }
+        .logo-group:hover .a-box { border-radius: 50%; background: #000; color: #fff; }
+
+        /* Smooth UI Transitions */
+        .animate-fade { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="selection:bg-yellow-100 selection:text-black">
+
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 h-16 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 h-full flex justify-between items-center gap-6">
+            
+            <div class="flex items-center gap-2 cursor-pointer logo-group" onclick="window.location.href='index.html'">
+                <div class="a-box bg-black text-white flex items-center justify-center font-bold">
+                    <span class="a-letter">V</span>
+                </div>
+                <span class="text-lg font-bold tracking-tighter uppercase">STRA</span>
+            </div>
+            
+            <div class="flex-grow max-w-xl relative">
+                <input type="text" id="searchInput" onkeyup="handleSearch(event)" autocomplete="off"
+                       placeholder="Search catalog (e.g. Shirt, Men, Featured)..." 
+                       class="w-full bg-gray-50 border border-gray-200 rounded py-2 px-10 outline-none focus:bg-white focus:ring-1 focus:ring-black transition-all text-xs">
+                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+
+            <div id="auth-section" class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-4"></div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        
+        <header class="text-center mb-16 animate-fade">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight italic uppercase leading-none">The New Standard.</h1>
+            <p id="status-text" class="text-[9px] font-bold text-gray-400 tracking-[0.4em] mt-3 uppercase">Inventory Sync: Operational</p>
+        </header>
+
+        <section id="search-info" class="hidden mb-16 animate-fade">
+            <div class="flex justify-between items-center border-b border-black pb-2">
+                <h2 id="search-query-text" class="text-xs font-bold uppercase tracking-widest text-gray-500">Query Results</h2>
+                <button onclick="clearSearch()" class="text-[9px] font-bold underline uppercase hover:text-red-600 transition-colors">Clear Search</button>
+            </div>
+            <div id="search-results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-8"></div>
+        </section>
+
+        <div id="storefront-content" class="space-y-20">
+            
+            <section id="featured-section">
+                <h2 class="text-xs font-bold mb-6 uppercase tracking-[0.3em] border-l-4 border-black pl-3">Top Picks</h2>
+                <div id="featured-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            </section>
+
+            <section id="men-section">
+                <h2 class="text-xs font-bold mb-6 uppercase tracking-[0.3em] border-l-4 border-black pl-3">Men's Apparel</h2>
+                <div id="men-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            </section>
+
+            <section id="women-section">
+                <h2 class="text-xs font-bold mb-6 uppercase tracking-[0.3em] border-l-4 border-black pl-3">Women's Apparel</h2>
+                <div id="women-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/auth.js" defer></script>
+    <script src="js/main.js" defer></script>
+</body>
+</html>

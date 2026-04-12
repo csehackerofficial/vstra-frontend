@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page - VSTRA</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="form-box active" id="loginBox">
+        <h2>Login</h2>
+        <input type="email" placeholder="Email" id="loginEmail">
+        <input type="password" placeholder="Password" id="loginPassword">
+        <button onclick="login()">Login</button>
+
+        <div class="options">
+            <a href="#" onclick="showForgot()">Forgot Password?</a>
+            <a href="#" onclick="showRegister()">Register</a>
+        </div>
+        <button class="google-btn">Login with Google</button>
+    </div>
+
+    <div class="form-box" id="registerBox">
+        <h2>Register</h2>
+        <input type="text" id="regName" placeholder="Name">
+        <input type="email" id="regEmail" placeholder="Email">
+        <input type="password" id="regPassword" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <div class="form-box" id="forgotBox">
+        <h2>Forgot Password</h2>
+        <input type="email" id="forgotEmail" placeholder="Enter your Email">
+        <button onclick="resetPassword()">Reset Password</button>
+        <p><a href="#" onclick="showLogin()">Back to Login</a></p>
+    </div>
+
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

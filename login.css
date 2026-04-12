@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #eef5fb; /* very light blue */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container */
+.container {
+    width: 340px;
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #d6e4f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Form */
+.form-box {
+    display: none;
+}
+
+.form-box.active {
+    display: block;
+}
+
+/* Heading */
+h2 {
+    text-align: center;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #cfd9e3;
+    border-radius: 5px;
+    background: #f9fcff;
+    box-sizing: border-box; /* FIX ALIGNMENT */
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px; /* FIX SPACING */
+    background: #2c3e50; /* dark formal blue */
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-sizing: border-box; /* FIX ALIGNMENT */
+}
+
+button:hover {
+    background: #1b2a38;
+}
+
+/* Google Button */
+.google-btn {
+    background: #e3f0fb; /* light blue */
+    color: #2c3e50;
+    border: 1px solid #c6dff5;
+}
+
+.google-btn:hover {
+    background: #d6e9f9;
+}
+
+/* Links */
+a {
+    color: #2c3e50;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Text */
+p {
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Align Forgot + Register in one line */
+.options {
+    display: flex;
+    justify-content: space-between; /* left & right */
+    margin-top: 10px;
+}
+
+.options a {
+    font-size: 14px;
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+.options a:hover {
+    text-decoration: underline;
+}
