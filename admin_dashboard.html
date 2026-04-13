@@ -8,21 +8,23 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         @font-face { font-family: 'Amazon Ember'; src: local('Amazon Ember'), url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonEmber-Regular-934f0d2382743818c5483f8d227311394b87e6b0._V1_.woff2') format('woff2'); }
-        body { font-family: 'Amazon Ember', Arial, sans-serif; background-color: #fcfcfc; }
+        body { font-family: 'Amazon Ember', Arial, sans-serif; background-color: #fcfcfc; color: #111; }
         .tab-btn.active { border-left: 3px solid #000; background: #f9f9f9; color: #000; font-weight: 800; }
         .animate-fade { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="selection:bg-gray-200 selection:text-black flex flex-col min-h-screen">
     
     <nav class="bg-white border-b border-gray-100 h-16 w-full shadow-sm flex items-center justify-between px-4 md:px-6 sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-black text-white flex items-center justify-center font-bold rounded text-xs">V</div>
+            <div class="w-8 h-8 bg-black text-white flex items-center justify-center font-bold rounded text-xs shadow-sm">V</div>
             <span class="text-sm font-black tracking-widest uppercase text-gray-800">Admin Control</span>
         </div>
-        <button onclick="window.location.href='index.html'" class="text-[10px] font-bold text-gray-500 hover:text-black uppercase tracking-widest transition-colors flex items-center gap-1">
-            <i class="ri-logout-box-r-line text-lg"></i> <span class="hidden md:inline">Exit Dashboard</span>
+        <button onclick="window.location.href='index.html'" class="text-[10px] font-bold text-gray-500 hover:text-black uppercase tracking-widest transition-colors flex items-center gap-1.5 group">
+            <i class="ri-logout-box-r-line text-lg group-hover:-translate-x-1 transition-transform"></i> <span class="hidden md:inline">Exit Dashboard</span>
         </button>
     </nav>
 
@@ -39,52 +41,47 @@
                     <i class="ri-shopping-bag-3-line text-lg"></i> Store Catalog
                 </button>
                 <button onclick="switchTab('sales')" id="btn-sales" class="tab-btn w-full text-left px-4 py-3.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
-                    <i class="ri-cash-line text-lg"></i> Products Sold
+                    <i class="ri-file-list-3-line text-lg"></i> Sales History
                 </button>
                 
                 <button onclick="switchTab('banners')" id="btn-banners" class="tab-btn w-full text-left px-4 py-3.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-blue-50 transition-all flex items-center gap-3 mt-4 rounded-r-md border-t border-gray-100 pt-5">
-                    <i class="ri-slideshow-3-line text-lg text-blue-500"></i> Homepage Banners
+                    <i class="ri-slideshow-3-line text-lg text-blue-600"></i> Homepage Banners
                 </button>
             </aside>
 
             <div class="flex-grow bg-white p-4 md:p-8 rounded-lg border border-gray-100 shadow-sm min-h-[600px] overflow-hidden">
                 
                 <section id="sec-users" class="block space-y-6 animate-fade">
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                        <h2 class="text-lg md:text-xl font-bold tracking-tight text-gray-900">Global User Identities</h2>
+                    <div class="border-b border-gray-50 pb-4">
+                        <h2 class="text-xl font-black tracking-tight text-gray-900">Global User Identities</h2>
                     </div>
-                    <div id="user-list" class="overflow-x-auto"></div>
+                    <div id="user-list"></div>
                 </section>
 
                 <section id="sec-store" class="hidden space-y-6 animate-fade">
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                        <h2 class="text-lg md:text-xl font-bold tracking-tight text-gray-900">Master Inventory</h2>
-                        <button onclick="toggleModal('productModal', true)" class="text-[10px] font-bold uppercase tracking-widest bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-all shadow-md flex items-center gap-1.5">
-                            <i class="ri-add-line"></i> <span class="hidden sm:inline">Add Product</span>
+                    <div class="flex items-center justify-between border-b border-gray-50 pb-4">
+                        <h2 class="text-xl font-black tracking-tight text-gray-900">Master Inventory</h2>
+                        <button onclick="toggleModal('productModal', true)" class="text-[10px] font-bold uppercase tracking-widest bg-black text-white px-5 py-2.5 rounded shadow-lg hover:bg-gray-800 transition-all flex items-center gap-1.5">
+                            <i class="ri-add-fill text-sm"></i> Add New Product
                         </button>
                     </div>
-                    <div id="inventory-list" class="overflow-x-auto"></div>
+                    <div id="inventory-list"></div>
                 </section>
 
                 <section id="sec-sales" class="hidden space-y-6 animate-fade">
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                        <h2 class="text-lg md:text-xl font-bold tracking-tight text-gray-900">Sales Log (Orders)</h2>
+                    <div class="border-b border-gray-50 pb-4">
+                        <h2 class="text-xl font-black tracking-tight text-gray-900">Purchase Analytics</h2>
                     </div>
-                    <div id="sales-list" class="overflow-x-auto"></div>
+                    <div id="sales-list"></div>
                 </section>
 
                 <section id="sec-banners" class="hidden space-y-6 animate-fade">
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                        <h2 class="text-lg md:text-xl font-bold tracking-tight text-gray-900">Homepage Banners</h2>
-                        <button onclick="toggleModal('bannerModal', true)" class="text-[10px] font-bold uppercase tracking-widest bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all shadow-md flex items-center gap-1.5">
-                            <i class="ri-add-line"></i> <span class="hidden sm:inline">Add New Banner</span>
+                    <div class="flex items-center justify-between border-b border-gray-50 pb-4">
+                        <h2 class="text-xl font-black tracking-tight text-gray-900">Hero Promotions</h2>
+                        <button onclick="toggleModal('bannerModal', true)" class="text-[10px] font-bold uppercase tracking-widest bg-blue-600 text-white px-5 py-2.5 rounded shadow-lg hover:bg-blue-700 transition-all flex items-center gap-1.5">
+                            <i class="ri-image-add-fill text-sm"></i> New Banner
                         </button>
                     </div>
-                    
-                    <div id="banner-loading" class="text-center py-10 hidden">
-                        <p class="text-xs text-gray-400 animate-pulse">Loading Banners...</p>
-                    </div>
-
                     <div id="banner-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 </section>
 
@@ -93,62 +90,85 @@
     </main>
 
     <div id="productModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style="display: none;">
-        <div class="bg-white w-full max-w-lg rounded-lg p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-lg rounded-xl p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 class="text-lg font-bold text-gray-900 uppercase tracking-tight">List New Product</h3>
-                <button onclick="toggleModal('productModal', false)" class="text-gray-400 hover:text-black text-2xl transition-colors"><i class="ri-close-line"></i></button>
+                <h3 class="text-lg font-black text-gray-900 uppercase tracking-tight">List New Product</h3>
+                <button onclick="toggleModal('productModal', false)" class="text-gray-400 hover:text-black transition-colors"><i class="ri-close-line text-2xl"></i></button>
             </div>
             <form id="admin-form" onsubmit="saveProduct(event)" class="space-y-4">
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Product Name</label><input type="text" id="p-name" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Sale Price (₹)</label><input type="number" id="p-price" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Original MRP (₹)</label><input type="number" id="p-mrp" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black"></div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Product Name</label>
+                    <input type="text" id="p-name" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black transition-all" required placeholder="Premium Cotton Shirt">
                 </div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Category</label><select id="p-cat" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required><option value="Men">Men's Fashion</option><option value="Women">Women's Fashion</option><option value="Kids">Kids' Collection</option><option value="Featured">Top Pick / Featured</option></select></div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Image URL</label><input type="url" id="p-img" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Purchase Link (Ext. URL)</label><input type="url" id="p-link" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
-                <button type="submit" class="w-full bg-black text-white py-3.5 text-xs font-bold mt-4 shadow-md hover:bg-gray-800 transition-colors rounded uppercase tracking-widest">Publish to Store</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Sale Price (₹)</label>
+                        <input type="number" id="p-price" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black" required placeholder="499">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Original MRP (₹)</label>
+                        <input type="number" id="p-mrp" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black" placeholder="999">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Category (STRICT MATCH)</label>
+                    <select id="p-cat" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black appearance-none" required>
+                        <option value="Men's Fashion">Men's Fashion</option>
+                        <option value="Women's Fashion">Women's Fashion</option>
+                        <option value="Kids' Collection">Kids' Collection</option>
+                        <option value="Featured">Top Pick / Featured</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Image URL</label>
+                    <input type="url" id="p-img" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black" required placeholder="https://...">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Amazon Purchase Link</label>
+                    <input type="url" id="p-link" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black" required placeholder="https://amazon.to/...">
+                </div>
+                <button type="submit" class="w-full bg-black text-white py-4 text-xs font-black mt-4 shadow-xl hover:bg-gray-800 transition-all rounded-lg uppercase tracking-widest">Publish to Store</button>
             </form>
         </div>
     </div>
 
     <div id="bannerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style="display: none;">
-        <div class="bg-white w-full max-w-lg rounded-lg p-6 md:p-8 shadow-2xl relative">
+        <div class="bg-white w-full max-w-lg rounded-xl p-6 md:p-8 shadow-2xl relative">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Add Homepage Banner</h3>
-                <button onclick="toggleModal('bannerModal', false)" class="text-gray-400 hover:text-black text-2xl transition-colors"><i class="ri-close-line"></i></button>
+                <h3 class="text-lg font-black text-gray-900 uppercase tracking-tight">Update Slider</h3>
+                <button onclick="toggleModal('bannerModal', false)" class="text-gray-400 hover:text-black transition-colors"><i class="ri-close-line text-2xl"></i></button>
             </div>
             <form id="banner-form" onsubmit="saveBanner(event)" class="space-y-4">
                 <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Banner Image URL</label>
-                    <input type="url" id="b-image" placeholder="https://..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500" required>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Banner Image Link</label>
+                    <input type="url" id="b-image" placeholder="https://..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-600" required>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Target URL (On Click)</label>
-                    <input type="url" id="b-link" placeholder="https://..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500" required>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Click Destination (Link)</label>
+                    <input type="url" id="b-link" placeholder="https://..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-600" required>
                 </div>
-                <div class="border border-gray-100 rounded-md p-4 bg-gray-50 mt-2">
-                    <label class="text-xs font-bold text-gray-700 uppercase tracking-widest block mb-3 border-b border-gray-200 pb-2">Overlay Customization</label>
-                    <div class="mb-3">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Text on Banner (Optional)</label>
-                        <input type="text" id="b-text" placeholder="e.g. Summer Sale 50% Off" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                <div class="border border-gray-100 rounded-lg p-4 bg-gray-50">
+                    <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-3 border-b pb-2">Overlay Customization</label>
+                    <div class="mb-4">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Banner Text (Optional)</label>
+                        <input type="text" id="b-text" placeholder="Summer 2026 Collection" class="w-full bg-white border border-gray-200 rounded px-4 py-2 text-sm outline-none focus:border-blue-600">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Text Position</label>
-                            <select id="b-text-pos" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Alignment</label>
+                            <select id="b-text-pos" class="w-full bg-white border border-gray-200 rounded px-4 py-2 text-sm outline-none">
                                 <option value="center">Center</option>
                                 <option value="left">Left</option>
                                 <option value="right">Right</option>
                             </select>
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Priority (1 = First)</label>
-                            <input type="number" id="b-priority" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Display Priority</label>
+                            <input type="number" id="b-priority" value="0" class="w-full bg-white border border-gray-200 rounded px-4 py-2 text-sm outline-none">
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-3.5 text-xs font-bold mt-4 shadow-md hover:bg-blue-700 transition-colors rounded uppercase tracking-widest">Publish Banner</button>
+                <button type="submit" class="w-full bg-blue-600 text-white py-4 text-xs font-black mt-4 shadow-xl hover:bg-blue-700 transition-all rounded-lg uppercase tracking-widest">Update Banner</button>
             </form>
         </div>
     </div>
