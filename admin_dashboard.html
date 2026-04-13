@@ -1,156 +1,183 @@
-/**
- * @file admin_dashboard.js
- * @description Advanced Administrative Logic for VASTRA Dashboard.
- * Features: Role Management, CSV Export, Real-time Search.
- */
-
-let allAdminUsers = [];
-let allAdminProducts = []; 
-let allAdminSales = [];
-
-// --- TAB SWITCHING LOGIC ---
-function switchTab(tab) {
-    ['sec-users', 'sec-store', 'sec-sales'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-        document.getElementById(id).classList.remove('block');
-    });
-    ['btn-users', 'btn-store', 'btn-sales'].forEach(id => {
-        document.getElementById(id).classList.remove('active', 'text-black');
-    });
-
-    document.getElementById(`sec-${tab}`).classList.remove('hidden');
-    document.getElementById(`sec-${tab}`).classList.add('block');
-    const activeBtn = document.getElementById(`btn-${tab}`);
-    activeBtn.classList.add('active', 'text-black');
-
-    if (tab === 'users') loadUsers();
-    else if (tab === 'store') loadInventory();
-    else if (tab === 'sales') loadSales();
-}
-
-// ==========================================
-// 🌟 USER REGISTRY & ROLE MANAGEMENT
-// ==========================================
-
-async function loadUsers() {
-    const tableBody = document.getElementById("userTable");
-    const loader = document.getElementById("loading-users");
-    tableBody.innerHTML = ""; loader.classList.remove("hidden");
-
-    try {
-        const response = await fetch("https://vstra-backend.onrender.com/api/users");
-        if (!response.ok) throw new Error("Network response failed.");
-        allAdminUsers = await response.json();
-        loader.classList.add("hidden");
-        renderUserTable(allAdminUsers);
-    } catch (err) {
-        loader.classList.add("hidden");
-        if(window.vastraAlert) vastraAlert("Database Sync Failed. Server might be sleeping.", "error");
-    }
-}
-
-function renderUserTable(users) {
-    const tableBody = document.getElementById("userTable");
-    if (users.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-[11px] font-bold text-gray-300 uppercase">No identities found.</td></tr>`;
-        return;
-    }
-
-    tableBody.innerHTML = users.map(user => {
-        const dateObj = new Date(user.created_at);
-        const regDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        const regTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VASTRA | Administrative Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body { background-color: #f9fafb; font-family: sans-serif; color: #111827; }
+        .tab-btn.active { border-left: 4px solid black; background-color: #f3f4f6; color: black; font-weight: bold; }
         
-        // Check Role
-        const isAdmin = user.role === 'admin';
-        const roleColor = isAdmin ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200';
-        const newRole = isAdmin ? 'user' : 'admin';
-        const actionText = isAdmin ? 'Remove Admin' : 'Make Admin';
+        /* Table Style */
+        th { font-size: 11px; font-weight: 700; color: #6b7280; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing: 0.1em; }
+        td { border-bottom: 1px solid #e5e7eb; padding-top: 14px; padding-bottom: 14px; }
+        tr:hover { background-color: #fafafa; }
+        
+        /* Search Bar Style */
+        .search-input { width: 100%; max-width: 320px; }
 
-        return `
-            <tr class="hover:bg-gray-50 transition-colors">
-                <td class="py-5 px-4 font-mono text-[11px] text-gray-400">#${user.id}</td>
-                <td class="py-5 font-black uppercase tracking-tight text-gray-900">${user.name}</td>
-                <td class="py-5">
-                    <div class="font-semibold text-gray-800 text-xs">${user.email}</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">${user.phone_number || 'N/A'}</div>
-                </td>
-                <td class="py-5 font-semibold italic text-xs text-gray-700">${regDate} at ${regTime}</td>
-                <td class="py-5">
-                    <span class="${roleColor} border text-[9px] font-bold px-2 py-1 rounded uppercase tracking-widest">${user.role}</span>
-                </td>
-                <td class="py-5 px-4 text-right">
-                    <button onclick="toggleAdminRole(${user.id}, '${newRole}', '${user.name}')" 
-                            class="text-[9px] font-bold uppercase tracking-widest ${isAdmin ? 'text-red-500 hover:text-red-700' : 'text-blue-500 hover:text-blue-700'} underline transition-colors">
-                        ${actionText}
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
+        /* V -> VASTRA Logo Animation */
+        .logo-container { display: flex; align-items: center; cursor: pointer; overflow: hidden; padding-right: 5px; }
+        .logo-box { width: 32px; height: 32px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; transition: all 0.4s ease-in-out; z-index: 2; }
+        .logo-text-hidden { max-width: 0; opacity: 0; font-weight: bold; font-size: 1.125rem; letter-spacing: -0.05em; white-space: nowrap; transition: all 0.4s ease-in-out; transform: translateX(-10px); color: #000; }
+        .logo-container:hover .logo-text-hidden { max-width: 100px; opacity: 1; transform: translateX(5px); }
 
-// 🌟 Toggle Admin Privilege with Custom UI Confirmation
-window.toggleAdminRole = (userId, newRole, userName) => {
-    const actionWord = newRole === 'admin' ? 'promote' : 'demote';
-    
-    vastraConfirm(
-        "Change User Role",
-        `Are you sure you want to ${actionWord} <b>${userName}</b> to ${newRole.toUpperCase()}?`,
-        "Confirm Change",
-        async () => {
-            try {
-                const res = await fetch(`https://vstra-backend.onrender.com/api/users/${userId}/role`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: newRole })
-                });
+        /* Modal Overlay */
+        .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body class="font-sans antialiased selection:bg-gray-200">
+
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 h-16 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
+            <div class="logo-container" onclick="window.location.href='index.html'">
+                <div class="logo-box">V</div>
+                <div class="logo-text-hidden">ASTRA Admin</div>
+            </div>
+            <a href="index.html" class="text-xs font-semibold uppercase tracking-widest text-gray-500 hover:text-black transition-all flex items-center gap-1.5">
+                <i class="ri-logout-box-r-line"></i> Exit Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex flex-col md:flex-row gap-10">
+            
+            <aside class="w-full md:w-60 space-y-1 border-r border-gray-100 pr-6">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">Core Management</h3>
+                <button onclick="switchTab('users')" id="btn-users" class="tab-btn active w-full text-left px-4 py-3.5 text-[11px] font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
+                    <i class="ri-user-follow-line text-lg"></i> User Registry
+                </button>
+                <button onclick="switchTab('store')" id="btn-store" class="tab-btn w-full text-left px-4 py-3.5 text-[11px] font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
+                    <i class="ri-shopping-bag-3-line text-lg"></i> Store Catalog
+                </button>
+                <button onclick="switchTab('sales')" id="btn-sales" class="tab-btn w-full text-left px-4 py-3.5 text-[11px] font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
+                    <i class="ri-cash-line text-lg"></i> Products Sold
+                </button>
+            </aside>
+
+            <div class="flex-grow bg-white p-6 md:p-8 rounded-lg border border-gray-100 shadow-sm min-h-[600px]">
                 
-                if (res.ok) {
-                    vastraAlert(`Successfully changed ${userName}'s role to ${newRole}.`, 'success');
-                    loadUsers(); // Reload table
-                } else {
-                    vastraAlert("Failed to update role.", "error");
-                }
-            } catch (err) {
-                vastraAlert("Network error. Try again.", "error");
-            }
-        }
-    );
-};
+                <section id="sec-users" class="space-y-8 block animate-fade">
+                    <div class="flex items-center justify-between gap-4 border-b border-gray-100 pb-6">
+                        <h2 class="text-2xl font-bold tracking-tighter text-gray-900">Global User Identities</h2>
+                        <div class="flex items-center gap-3">
+                            <input type="text" id="user-search" placeholder="Search users..." class="search-input border border-gray-300 rounded px-4 py-2 text-sm outline-none focus:border-black shadow-inner">
+                            <button onclick="downloadUserData()" class="text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all flex items-center gap-1.5 shadow-sm">
+                                <i class="ri-download-cloud-line"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr class="uppercase text-gray-400">
+                                    <th class="py-5 px-4 rounded-tl-lg">UID</th>
+                                    <th class="py-5">Identity</th>
+                                    <th class="py-5">Email & Phone</th>
+                                    <th class="py-5">Registered On</th>
+                                    <th class="py-5">Role</th>
+                                    <th class="py-5 px-4 rounded-tr-lg text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTable">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="loading-users" class="text-center py-20 hidden">
+                        <p class="text-[11px] font-bold uppercase text-gray-300 animate-pulse tracking-[0.5em]">Synchronizing Registry...</p>
+                    </div>
+                </section>
 
-// 🌟 Export Users to CSV
-window.downloadUserData = () => {
-    if (allAdminUsers.length === 0) { vastraAlert('No data available to download.', 'error'); return; }
-    
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "UID,Name,Email,Phone,Role,Registration Date\n"; // Header row
+                <section id="sec-store" class="hidden space-y-8 animate-fade">
+                    <div class="flex items-center justify-between gap-4 border-b border-gray-100 pb-6">
+                        <h2 class="text-2xl font-bold tracking-tighter text-gray-900">Inventory Management</h2>
+                        <div class="flex items-center gap-3">
+                            <input type="text" id="product-search" placeholder="Search products..." class="search-input border border-gray-300 rounded px-4 py-2 text-sm outline-none focus:border-black shadow-inner">
+                            <button onclick="toggleModal('productModal', true)" class="text-[10px] font-bold uppercase tracking-widest bg-black text-white px-5 py-2.5 rounded hover:bg-gray-800 transition-all flex items-center gap-1.5 shadow-md">
+                                <i class="ri-add-line"></i> Add Product
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr class="uppercase text-gray-400">
+                                    <th class="py-5 px-4 rounded-tl-lg">Preview</th>
+                                    <th class="py-5">Product Name</th>
+                                    <th class="py-5">Category</th>
+                                    <th class="py-5">Price</th>
+                                    <th class="py-5 px-4 text-right rounded-tr-lg">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-list"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-    allAdminUsers.forEach(user => {
-        const dateStr = new Date(user.created_at).toLocaleString();
-        const row = `${user.id},"${user.name}","${user.email}","${user.phone_number || 'N/A'}","${user.role}","${dateStr}"`;
-        csvContent += row + "\r\n";
-    });
+                <section id="sec-sales" class="hidden space-y-8 animate-fade">
+                    <div class="flex items-center justify-between gap-4 border-b border-gray-100 pb-6">
+                        <h2 class="text-2xl font-bold tracking-tighter text-gray-900">Sales Log (Orders)</h2>
+                        <input type="text" id="sales-search" placeholder="Search orders..." class="search-input border border-gray-300 rounded px-4 py-2 text-sm outline-none focus:border-black shadow-inner">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr class="uppercase text-gray-400">
+                                    <th class="py-5 px-4 rounded-tl-lg">Order ID</th>
+                                    <th class="py-5">Preview</th>
+                                    <th class="py-5">Product Name</th>
+                                    <th class="py-5">Customer Identity</th>
+                                    <th class="py-5">Price</th>
+                                    <th class="py-5 px-4 rounded-tr-lg">Date & Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-list"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "VASTRA_Users_Data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    vastraAlert("User data downloaded successfully.", "success");
-};
+            </div>
+        </div>
+    </main>
 
-// Live Search logic...
-document.getElementById('user-search').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (query === "") { renderUserTable(allAdminUsers); return; }
-    const results = allAdminUsers.filter(u => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query) || (u.phone_number && u.phone_number.includes(query)));
-    renderUserTable(results);
-});
+    <div id="productModal" class="fixed inset-0 z-50 items-center justify-center p-4" style="display: none;">
+        <div class="modal-overlay absolute inset-0" onclick="toggleModal('productModal', false)"></div>
+        <div class="bg-white w-full max-w-lg relative z-10 rounded-lg p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-900">List New Product</h3>
+                <button onclick="toggleModal('productModal', false)" class="text-gray-400 hover:text-black text-xl transition-colors"><i class="ri-close-line"></i></button>
+            </div>
+            <form id="admin-form" onsubmit="saveProduct(event)" class="space-y-5">
+                <div class="grid grid-cols-1 gap-4">
+                    <div><label class="text-xs font-semibold text-gray-600 block mb-1">Display Name</label><input type="text" id="p-title" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
+                    <div><label class="text-xs font-semibold text-gray-600 block mb-1">Image Link</label><input type="url" id="p-image" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
+                    <div><label class="text-xs font-semibold text-gray-600 block mb-1">Purchase Link</label><input type="url" id="p-link" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-semibold text-gray-600 block mb-1">MRP</label><input type="number" id="p-mrp" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
+                        <div><label class="text-xs font-semibold text-gray-600 block mb-1">Sale Price</label><input type="number" id="p-price" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black" required></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600 block mb-1">Category</label>
+                        <select id="p-category" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-black">
+                            <option value="featured">Featured Drops</option>
+                            <option value="men">Men's Apparel</option>
+                            <option value="women">Women's Apparel</option>
+                            <option value="kids">Kids' Collection</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-black text-white py-3 text-sm font-bold mt-4 shadow-md hover:bg-gray-800 transition-colors rounded">Confirm & Publish</button>
+            </form>
+        </div>
+    </div>
 
-// Boot Load
-document.addEventListener('DOMContentLoaded', () => { loadUsers(); });
+    <div id="custom-alert-container"></div>
 
-/* --- Note: Ensure loadInventory() and loadSales() functions from previous code are included here below this line if you split the file. --- */
+    <script src="js/auth.js"></script>
+    <script src="js/admin_dashboard.js"></script>
+</body>
+</html>
