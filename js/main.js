@@ -1,7 +1,7 @@
 /**
  * @file main.js
  * @description VASTRA Storefront Core Logic.
- * Features: Dynamic Slider, Real-time Search, Wishlist, Orders, and Kids Category.
+ * Features: Dynamic Touch Slider, Real-time Search, Wishlist, Orders, and Kids Category.
  */
 
 let allProducts = [];
@@ -9,7 +9,7 @@ let currentSlide = 0;
 let sliderTimer;
 
 // ==========================================
-// 🌟 DYNAMIC HERO SLIDER LOGIC
+// 🌟 DYNAMIC HERO SLIDER LOGIC (With Touch & Text)
 // ==========================================
 async function fetchBanners() {
     try {
@@ -21,12 +21,23 @@ async function fetchBanners() {
             const track = document.getElementById('slider-track');
             const nav = document.getElementById('slider-nav');
             
-            track.innerHTML = banners.map((b, index) => `
+            track.innerHTML = banners.map((b, index) => {
+                // Determine text position class based on database value
+                const posClass = b.text_position === 'left' ? 'text-pos-left' : 
+                                 b.text_position === 'right' ? 'text-pos-right' : 'text-pos-center';
+
+                return `
                 <div class="slide ${index === 0 ? 'active' : ''}" 
                      style="background-image: url('${b.image_url}');"
                      onclick="window.open('${b.target_link}', '_blank')">
+                     
+                     ${b.text_content ? `
+                     <div class="slide-text-container ${posClass}">
+                        <div class="slide-text text-xl md:text-3xl">${b.text_content}</div>
+                     </div>
+                     ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
 
             if (banners.length > 1) {
                 nav.innerHTML = banners.map((b, index) => `
@@ -43,6 +54,7 @@ async function fetchBanners() {
 function initSlider() {
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.slider-dot');
+    const container = document.getElementById('dynamic-slider-container');
     
     function showSlide(index) {
         slides.forEach(s => s.classList.remove('active'));
@@ -53,14 +65,42 @@ function initSlider() {
     }
 
     function nextSlide() { showSlide((currentSlide + 1) % slides.length); }
+    function prevSlide() { showSlide((currentSlide - 1 + slides.length) % slides.length); }
     
     window.goToSlide = (index) => { 
         showSlide(index); 
-        clearInterval(sliderTimer); 
-        sliderTimer = setInterval(nextSlide, 4000); 
+        resetTimer(); 
     };
     
-    sliderTimer = setInterval(nextSlide, 4000);
+    function resetTimer() {
+        clearInterval(sliderTimer);
+        sliderTimer = setInterval(nextSlide, 5000); // 5 seconds auto-slide
+    }
+    
+    resetTimer();
+
+    // 🌟 Mobile Touch Swipe Logic
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    if(container) {
+        container.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            clearInterval(sliderTimer); // Pause auto-slide on touch
+        }, {passive: true});
+
+        container.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+            resetTimer(); // Resume auto-slide
+        }, {passive: true});
+    }
+
+    function handleSwipe() {
+        const threshold = 50; // Minimum pixel distance for swipe
+        if (touchEndX < touchStartX - threshold) nextSlide(); // Swipe Left -> Next
+        if (touchEndX > touchStartX + threshold) prevSlide(); // Swipe Right -> Prev
+    }
 }
 
 // ==========================================
