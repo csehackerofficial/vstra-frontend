@@ -1,6 +1,7 @@
 /**
  * @file main.js
  * @description VASTRA Storefront Master Logic (Fully Cloud Integrated).
+ * Fix: Category Conflict (Women's items appearing in Men's section).
  */
 
 let allProducts = [];
@@ -18,7 +19,6 @@ async function fetchBanners() {
         const banners = await res.json();
         
         if (banners.length > 0) {
-            const container = document.getElementById('dynamic-slider-container');
             const track = document.getElementById('slider-track');
             const nav = document.getElementById('slider-nav');
             
@@ -41,7 +41,7 @@ async function fetchBanners() {
                 nav.innerHTML = banners.map((b, index) => `<div class="slider-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></div>`).join('');
                 initSlider();
             }
-            container.classList.remove('hidden');
+            document.getElementById('dynamic-slider-container').classList.remove('hidden');
         }
     } catch (err) { console.error("Banner fetch failed", err); }
 }
@@ -49,27 +49,20 @@ async function fetchBanners() {
 function initSlider() {
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.slider-dot');
-    
+    const nextSlide = () => { currentSlide = (currentSlide + 1) % slides.length; showSlide(currentSlide); };
     function showSlide(index) {
         slides.forEach(s => s.classList.remove('active'));
         dots.forEach(d => d.classList.remove('active'));
         slides[index].classList.add('active');
         dots[index].classList.add('active');
-        currentSlide = index;
     }
-
-    const nextSlide = () => showSlide((currentSlide + 1) % slides.length);
     window.goToSlide = (index) => { showSlide(index); resetTimer(); };
-    
-    function resetTimer() {
-        clearInterval(sliderTimer);
-        sliderTimer = setInterval(nextSlide, 5000);
-    }
+    function resetTimer() { clearInterval(sliderTimer); sliderTimer = setInterval(nextSlide, 5000); }
     resetTimer();
 }
 
 // ==========================================
-// 🌟 INVENTORY & CATEGORY RENDERING
+// 🌟 INVENTORY & CATEGORY RENDERING (STRICT FIX)
 // ==========================================
 async function initStorefront() {
     fetchBanners();
@@ -81,11 +74,18 @@ async function initStorefront() {
 }
 
 function displayInventory(products) {
-    const categories = ['featured', 'men', 'women', 'kids'];
-    categories.forEach(cat => {
-        const filtered = products.filter(p => (p.category || "").toLowerCase().trim().includes(cat));
-        renderProductGrid(`${cat}-grid`, filtered);
-    });
+    // 🌟 Master Fix: Using Exact String Matching instead of .includes()
+    // This prevents "Women's Fashion" from appearing in "Men's Fashion"
+    
+    const featuredItems = products.filter(p => (p.category || "").trim() === "Featured");
+    const menItems = products.filter(p => (p.category || "").trim() === "Men's Fashion");
+    const womenItems = products.filter(p => (p.category || "").trim() === "Women's Fashion");
+    const kidsItems = products.filter(p => (p.category || "").trim() === "Kids' Collection");
+
+    renderProductGrid('featured-grid', featuredItems);
+    renderProductGrid('men-grid', menItems);
+    renderProductGrid('women-grid', womenItems);
+    renderProductGrid('kids-grid', kidsItems);
 }
 
 function renderProductGrid(id, products) {
@@ -93,12 +93,11 @@ function renderProductGrid(id, products) {
     if (!grid) return; 
 
     if (products.length === 0) {
-        grid.innerHTML = `<p class="text-xs text-gray-400 col-span-full pb-8">New collection dropping soon...</p>`;
+        grid.innerHTML = `<p class="text-xs text-gray-400 col-span-full pb-8 italic">New collection dropping soon...</p>`;
         return;
     }
 
     grid.innerHTML = products.map(p => {
-        // 🌟 Feature: Real-time Discount Percentage
         const discount = p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
         
         return `
@@ -106,7 +105,6 @@ function renderProductGrid(id, products) {
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100 cursor-pointer" 
                  onclick="handlePurchase('${p.purchase_link}', ${p.id})">
                 <img src="${p.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
-                
                 ${discount > 0 ? `<div class="absolute top-2 left-2 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">-${discount}% OFF</div>` : ''}
             </div>
             
@@ -133,12 +131,10 @@ function renderProductGrid(id, products) {
 // ==========================================
 // 🌟 DATABASE WISHLIST & ORDERS
 // ==========================================
-
 window.saveToWishlist = async (productId, event) => {
     const user = JSON.parse(localStorage.getItem('vastra_user'));
     if (!user) { 
-        if(window.vastraAlert) vastraAlert('Please login to save items!', 'error');
-        else alert('Login Required!');
+        window.location.href = 'login.html';
         return; 
     }
     
@@ -155,8 +151,10 @@ window.saveToWishlist = async (productId, event) => {
         if (data.success) {
             icon.classList.replace('ri-bookmark-line', 'ri-bookmark-fill');
             if (window.vastraAlert) vastraAlert('Added to Wishlist!', 'success');
+            else alert("Added to Wishlist!");
         } else {
             if (window.vastraAlert) vastraAlert(data.message, 'info');
+            else alert(data.message);
         }
     } catch (err) { console.error("Wishlist sync error", err); }
 };
@@ -165,31 +163,24 @@ window.handlePurchase = async (link, productId) => {
     const user = JSON.parse(localStorage.getItem('vastra_user'));
     if (user) {
         try {
-            // Save click event to database for analytics/history
             await fetch(`${API_BASE}/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user.email, product_id: productId })
             });
-        } catch (e) { console.log("Order logging skipped"); }
+        } catch (e) { console.log("Order log skipped"); }
         window.open(link, '_blank');
     } else {
         window.location.href = 'login.html';
     }
 };
 
-// ==========================================
-// 🌟 SEARCH LOGIC
-// ==========================================
 window.handleSearch = (e) => {
     const query = e.target.value.toLowerCase().trim();
-    const storefront = document.getElementById('storefront-content');
-    const searchArea = document.getElementById('search-info');
-    
     if (query.length > 0) {
         const results = allProducts.filter(p => (p.name && p.name.toLowerCase().includes(query)) || (p.category && p.category.toLowerCase().includes(query)));
-        storefront.classList.add('hidden'); 
-        searchArea.classList.remove('hidden'); 
+        document.getElementById('storefront-content').classList.add('hidden'); 
+        document.getElementById('search-info').classList.remove('hidden'); 
         renderProductGrid('search-results-grid', results);
     } else { clearSearch(); }
 };
