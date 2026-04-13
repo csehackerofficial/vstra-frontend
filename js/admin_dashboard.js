@@ -1,6 +1,6 @@
 /**
  * @file admin_dashboard.js
- * @description Updated Administrative Logic for VASTRA.
+ * @description Updated Administrative Logic for VASTRA with Debug Logs.
  */
 
 let allAdminUsers = [];
@@ -37,7 +37,6 @@ function switchTab(tab) {
         if(tab === 'banners') activeBtn.classList.add('bg-blue-50');
     }
 
-    // Load Data based on Tab
     if (tab === 'users') loadUsers();
     else if (tab === 'store') loadInventory(); 
     else if (tab === 'sales') loadSales();
@@ -64,17 +63,23 @@ async function loadUsers() {
     container.innerHTML = "<p class='text-center py-10 animate-pulse text-xs text-gray-400 uppercase tracking-widest'>Connecting to Database...</p>";
 
     try {
+        console.log("Fetching users from:", `${API_BASE}/users`);
         const response = await fetch(`${API_BASE}/users`);
+        
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        
         allAdminUsers = await response.json();
+        console.log("Users received:", allAdminUsers);
         renderUserTable(allAdminUsers);
     } catch (err) { 
-        container.innerHTML = `<p class='text-center py-10 text-red-500 text-xs font-bold'>OFFLINE: Failed to fetch users.</p>`;
+        console.error("User Load Error:", err);
+        container.innerHTML = `<p class='text-center py-10 text-red-500 text-xs font-bold'>OFFLINE: ${err.message}</p>`;
     }
 }
 
 function renderUserTable(users) {
     const container = document.getElementById("user-list");
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
         container.innerHTML = `<div class="text-center py-20 text-[11px] font-bold text-gray-300 uppercase tracking-widest">No Registered Users Yet.</div>`;
         return;
     }
@@ -102,16 +107,20 @@ async function loadInventory() {
 
     try {
         const res = await fetch(`${API_BASE}/products`);
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        
         allAdminProducts = await res.json();
+        console.log("Products received:", allAdminProducts);
         renderInventoryTable(allAdminProducts);
     } catch (err) { 
+        console.error("Inventory Load Error:", err);
         container.innerHTML = `<p class='text-center py-10 text-red-500 text-xs font-bold'>Error loading catalog.</p>`;
     }
 }
 
 function renderInventoryTable(products) {
     const container = document.getElementById('inventory-list');
-    if (products.length === 0) {
+    if (!products || products.length === 0) {
         container.innerHTML = `<div class="text-center py-20 text-[11px] font-bold text-gray-300 uppercase">Master Inventory Empty.</div>`;
         return;
     }
@@ -155,14 +164,16 @@ window.saveProduct = async (e) => {
             body: JSON.stringify(payload)
         });
 
-        if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
             alert("Success: Product added to Catalog!");
             toggleModal('productModal', false);
             loadInventory();
         } else {
-            alert("Error: Check if Product URL is correct.");
+            alert("Error: " + data.message);
         }
     } catch (err) {
+        console.error("Save Product Error:", err);
         alert("CRITICAL: Server Not Responding.");
     } finally {
         btn.innerText = "PUBLISH TO STORE";
@@ -178,7 +189,7 @@ async function loadBanners() {
     try {
         const res = await fetch(`${API_BASE}/banners`);
         const banners = await res.json();
-        if (banners.length === 0) {
+        if (!banners || banners.length === 0) {
             list.innerHTML = `<div class="col-span-full text-center py-10 text-[10px] font-bold text-gray-300 uppercase">Banners Gallery is Empty.</div>`;
             return;
         }
@@ -191,7 +202,7 @@ async function loadBanners() {
                 </div>
             </div>
         `).join('');
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Banner Load Error:", err); }
 }
 
 window.saveBanner = async (e) => {
@@ -240,7 +251,7 @@ async function loadSales() {
     try {
         const res = await fetch(`${API_BASE}/admin/sales`);
         const sales = await res.json();
-        if (sales.length === 0) {
+        if (!sales || sales.length === 0) {
             container.innerHTML = `<div class="text-center py-20 text-[11px] font-bold text-gray-300 uppercase">Sales History Empty.</div>`;
             return;
         }
@@ -253,10 +264,10 @@ async function loadSales() {
             </tr>
         `).join('');
         container.innerHTML = `<table class="w-full text-left"><tbody>${rows}</tbody></table>`;
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Sales Load Error:", err); }
 }
 
 // BOOT
 document.addEventListener('DOMContentLoaded', () => {
-    loadUsers();
+    switchTab('users'); // Start with users tab
 });
