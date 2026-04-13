@@ -18,8 +18,12 @@
         .tab-btn.active { border-left: 4px solid black; background-color: #f9fafb; color: black; font-weight: bold; }
         .logo-container { display: flex; align-items: center; cursor: pointer; overflow: hidden; padding-right: 5px; }
         .logo-box { width: 32px; height: 32px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 4px; transition: all 0.4s ease-in-out; z-index: 2; }
-        .logo-text-hidden { max-width: 0; opacity: 0; font-weight: bold; font-size: 1.125rem; letter-spacing: -0.05em; white-space: nowrap; transition: all 0.4s ease-in-out; transform: translateX(-10px); color: #000; }
-        .logo-container:hover .logo-text-hidden { max-width: 100px; opacity: 1; transform: translateX(5px); }
+        .logo-text-hidden { opacity: 0; font-weight: bold; font-size: 1.125rem; letter-spacing: -0.05em; white-space: nowrap; transition: all 0.4s ease-in-out; transform: translateX(-10px); color: #000; display: none; }
+        @media (min-width: 640px) { .logo-text-hidden { display: block; opacity: 1; transform: translateX(5px); } }
+
+        /* 🌟 WISHLIST IMAGE HOVER */
+        #wishlist-grid .group:hover img { transform: scale(1.05); }
+        #wishlist-grid img { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
 <body class="selection:bg-gray-200 selection:text-black">
@@ -34,104 +38,103 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 py-12 flex-grow w-full">
+    <main class="max-w-7xl mx-auto px-6 py-8 md:py-12 flex-grow w-full">
         <div class="flex flex-col md:flex-row gap-8">
             
-            <aside class="w-full md:w-64 space-y-1 border-r border-gray-100 pr-4">
+            <aside class="w-full md:w-64 space-y-1 border-r border-gray-100 pr-0 md:pr-4">
                 <button onclick="switchTab('info')" id="btn-info" class="tab-btn active w-full text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
                     <i class="ri-user-settings-line text-lg"></i> Personal Info
                 </button>
                 <button onclick="switchTab('wishlist')" id="btn-wishlist" class="tab-btn w-full text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
-                    <i class="ri-bookmark-line text-lg"></i> Wishlist
+                    <i class="ri-heart-3-line text-lg"></i> Wishlist
                 </button>
                 <button onclick="switchTab('orders')" id="btn-orders" class="tab-btn w-full text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-500 hover:text-black hover:bg-gray-50 transition-all flex items-center gap-3 rounded-r-md">
                     <i class="ri-shopping-bag-line text-lg"></i> My Orders
                 </button>
-                <button onclick="handleSidebarLogout()" class="w-full text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-red-500 hover:text-red-700 hover:bg-red-50 transition-all flex items-center gap-3 mt-10 rounded-md">
+                <button onclick="handleSidebarLogout()" class="w-full text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-red-500 hover:text-red-700 hover:bg-red-50 transition-all flex items-center gap-3 mt-6 md:mt-10 rounded-md">
                     <i class="ri-logout-circle-line text-lg"></i> Logout
                 </button>
             </aside>
 
-            <div class="flex-grow bg-white p-6 md:p-10 rounded-lg border border-gray-100 shadow-sm min-h-[500px]">
+            <div class="flex-grow bg-white p-5 md:p-10 rounded-lg border border-gray-100 shadow-sm min-h-[500px]">
                 
-                <section id="sec-info" class="space-y-8 block">
-                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight">Personal Information</h2>
+                <section id="sec-info" class="space-y-8 block animate-fade">
+                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight text-gray-900">Account Details</h2>
                     <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
                         <div class="relative group">
-                            <div id="profile-pic-display" class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-4xl font-bold border border-gray-300 overflow-hidden text-gray-600 shadow-inner">
-                            </div>
+                            <div id="profile-pic-display" class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-4xl font-bold border border-gray-300 overflow-hidden text-gray-400 shadow-inner">
+                                </div>
                             <label class="absolute bottom-0 right-2 bg-black text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-all shadow-lg border-2 border-white">
                                 <i class="ri-camera-fill"></i>
                                 <input type="file" accept="image/*" class="hidden" id="upload-pic" onchange="updateProfilePic(event)">
                             </label>
                         </div>
-                        <div class="space-y-4 w-full md:w-1/2">
+                        <div class="space-y-6 w-full md:w-1/2">
                             <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Full Name</label>
-                                <p id="user-name" class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Loading...</p>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Full Name</label>
+                                <p id="user-name" class="text-lg font-semibold text-gray-900 border-b border-gray-50 pb-1">Loading...</p>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Email Address</label>
-                                <p id="user-email" class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Loading...</p>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Email Address</label>
+                                <p id="user-email" class="text-lg font-semibold text-gray-900 border-b border-gray-50 pb-1">Loading...</p>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Phone Number</label>
-                                <p id="user-phone" class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Loading...</p>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Phone Number</label>
+                                <p id="user-phone" class="text-lg font-semibold text-gray-900 border-b border-gray-50 pb-1">Loading...</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="sec-wishlist" class="hidden space-y-6">
-                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight">My Wishlist</h2>
-                    <div id="wishlist-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                <section id="sec-wishlist" class="hidden space-y-6 animate-fade">
+                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight text-gray-900">My Wishlist</h2>
+                    <div id="wishlist-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                        </div>
                 </section>
 
-                <section id="sec-orders" class="hidden space-y-6">
-                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight">Order History</h2>
-                    <p class="text-xs text-gray-500 italic mb-4">Products you clicked to purchase are tracked here.</p>
-                    <div id="orders-list" class="space-y-4"></div>
+                <section id="sec-orders" class="hidden space-y-6 animate-fade">
+                    <h2 class="text-2xl font-bold border-b border-gray-100 pb-4 tracking-tight text-gray-900">Order History</h2>
+                    <div id="orders-list" class="space-y-4">
+                        </div>
                 </section>
 
             </div>
         </div>
     </main>
 
-    <footer class="bg-gray-900 text-white pt-16 pb-8 border-t-4 border-black mt-auto w-full">
-        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+    <footer class="bg-gray-900 text-white pt-12 pb-8 border-t-4 border-black mt-auto w-full">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <div>
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><div class="w-6 h-6 bg-white text-black flex items-center justify-center rounded text-sm">V</div> VASTRA</h3>
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <div class="w-6 h-6 bg-white text-black flex items-center justify-center rounded text-sm">V</div> VASTRA
+                </h3>
                 <p class="text-gray-400 text-sm">The new standard of fashion. Curated apparel for men, women, and kids. Delivered globally.</p>
             </div>
             <div>
-                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Shop Categories</h4>
+                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Shop</h4>
                 <ul class="space-y-2 text-sm text-gray-400">
-                    <li><a href="index.html#men-section" class="hover:text-white transition-colors">Men's Apparel</a></li>
-                    <li><a href="index.html#women-section" class="hover:text-white transition-colors">Women's Apparel</a></li>
-                    <li><a href="index.html#kids-section" class="hover:text-white transition-colors">Kids' Collection</a></li>
+                    <li><a href="index.html#men-section" class="hover:text-white transition-colors">Men</a></li>
+                    <li><a href="index.html#women-section" class="hover:text-white transition-colors">Women</a></li>
+                    <li><a href="index.html#kids-section" class="hover:text-white transition-colors">Kids</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Customer Support</h4>
+                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Support</h4>
                 <ul class="space-y-2 text-sm text-gray-400">
-                    <li><a href="profile.html" class="hover:text-white transition-colors">My Account</a></li>
-                    <li><a href="profile.html" class="hover:text-white transition-colors">Track Order</a></li>
-                    <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Track Order</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Connect</h4>
+                <h4 class="text-sm font-bold uppercase tracking-widest mb-4">Social</h4>
                 <div class="flex gap-4 text-xl text-gray-400">
                     <a href="#" class="hover:text-white transition-colors"><i class="ri-instagram-line"></i></a>
                     <a href="#" class="hover:text-white transition-colors"><i class="ri-twitter-x-line"></i></a>
-                    <a href="#" class="hover:text-white transition-colors"><i class="ri-youtube-line"></i></a>
                 </div>
             </div>
         </div>
-        <div class="max-w-7xl mx-auto px-6 border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-            <p>&copy; 2026 VASTRA Official Store. All rights reserved.</p>
-            <p class="mt-2 md:mt-0 font-medium">Developed & Maintained by <span class="text-white font-bold tracking-widest">VASTRAWIDE TECH TEAM</span></p>
-            <p class="mt-2 md:mt-0"><a href="https://vastrawide.netlify.app" target="_blank" class="hover:text-white underline">vastrawide.netlify.app</a></p>
+        <div class="max-w-7xl mx-auto px-6 border-t border-gray-800 pt-8 text-center text-[10px] text-gray-500 tracking-widest uppercase">
+            &copy; 2026 VASTRA Official Store. Developed by VASTRAWIDE TECH TEAM.
         </div>
     </footer>
 
