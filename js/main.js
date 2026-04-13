@@ -1,14 +1,13 @@
 /**
  * @file main.js
- * @description VASTRA Store Logic. (Updated for Dynamic Banners)
+ * @description VASTRA Store Logic.
  */
 
 let allProducts = [];
-
-// --- DYNAMIC SLIDER LOGIC ---
 let currentSlide = 0;
 let sliderTimer;
 
+// --- DYNAMIC SLIDER LOGIC ---
 async function fetchBanners() {
     try {
         const res = await fetch('https://vstra-backend.onrender.com/api/banners');
@@ -19,7 +18,6 @@ async function fetchBanners() {
             const track = document.getElementById('slider-track');
             const nav = document.getElementById('slider-nav');
             
-            // Build Slides HTML
             track.innerHTML = banners.map((b, index) => `
                 <div class="slide ${index === 0 ? 'active' : ''}" 
                      style="background-image: url('${b.image_url}');"
@@ -27,15 +25,14 @@ async function fetchBanners() {
                 </div>
             `).join('');
 
-            // Build Dots HTML
             if (banners.length > 1) {
                 nav.innerHTML = banners.map((b, index) => `
                     <div class="slider-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></div>
                 `).join('');
             }
 
-            container.classList.remove('hidden'); // Show slider
-            if (banners.length > 1) initSlider(); // Start Auto-slide if more than 1 image
+            container.classList.remove('hidden');
+            if (banners.length > 1) initSlider();
         }
     } catch (err) { console.error("Banner fetch failed", err); }
 }
@@ -63,21 +60,15 @@ function initSlider() {
     sliderTimer = setInterval(nextSlide, 4000);
 }
 
-/**
- * Initializes the storefront
- */
 async function initStorefront() {
-    fetchBanners(); // Load banners parallel to products
-    
+    fetchBanners();
     try {
         const res = await fetch('https://vstra-backend.onrender.com/api/products');
         allProducts = await res.json();
         displayInventory(allProducts);
         const statusText = document.getElementById('status-text');
         if(statusText) statusText.innerText = "System Sync: Connected";
-    } catch (err) {
-        console.error("VASTRA: Backend Connection Failed.", err);
-    }
+    } catch (err) { console.error("VASTRA: Backend Connection Failed.", err); }
 }
 
 function displayInventory(products) {
@@ -94,18 +85,26 @@ function renderProductGrid(id, products) {
     const grid = document.getElementById(id);
     if (!grid) return; 
 
+    // 🌟 FIX: Updated Buttons (Save to Left, Buy Now smaller to Right)
     grid.innerHTML = products.map(p => `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all">
-            <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100">
+            <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100 cursor-pointer" onclick="handlePurchase('${p.purchase_link}', ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}')">
                 <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/300x400?text=VASTRA'"
                      class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
             </div>
             <h3 class="text-[10px] font-bold uppercase truncate mb-1 text-gray-800">${p.name}</h3>
             <p class="font-bold text-xs mb-3">₹${p.price} <span class="text-[9px] text-gray-400 line-through ml-1">₹${p.mrp || 0}</span></p>
-            <button onclick="handlePurchase('${p.purchase_link}')" 
-                    class="w-full py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all">
-                Buy Now
-            </button>
+            
+            <div class="flex gap-2">
+                <button onclick="saveToWishlist(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}', '${p.price}')" title="Save to Wishlist"
+                        class="w-1/4 py-2 bg-white text-black border border-black text-sm flex justify-center items-center hover:bg-gray-100 transition-all">
+                    <i class="ri-bookmark-line"></i>
+                </button>
+                <button onclick="handlePurchase('${p.purchase_link}', ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}')" 
+                        class="w-3/4 py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-sm">
+                    Buy Now
+                </button>
+            </div>
         </div>
     `).join('');
 }
@@ -123,9 +122,36 @@ window.handleSearch = (e) => {
 
 window.clearSearch = () => { document.getElementById('searchInput').value = ""; document.getElementById('storefront-content').classList.remove('hidden'); document.getElementById('search-info').classList.add('hidden'); };
 
-function handlePurchase(link) {
+// 🌟 NEW: Wishlist Save Logic
+window.saveToWishlist = (id, name, image, price) => {
     const user = localStorage.getItem('vastra_user');
-    if (user) { window.open(link, '_blank'); } else { window.location.href = 'login.html'; }
+    if (!user) { window.location.href = 'login.html'; return; }
+    
+    let wishlist = JSON.parse(localStorage.getItem('vastra_wishlist')) || [];
+    const exists = wishlist.find(item => item.id === id);
+    if (!exists) {
+        wishlist.push({ id, name, image, price });
+        localStorage.setItem('vastra_wishlist', JSON.stringify(wishlist));
+        alert('Product added to Wishlist!');
+    } else {
+        alert('Product is already in your Wishlist!');
+    }
+    event.currentTarget.innerHTML = `<i class="ri-bookmark-fill text-black"></i>`;
+};
+
+// 🌟 NEW: Order Tracking Logic
+window.handlePurchase = (link, id, name, image) => {
+    const user = localStorage.getItem('vastra_user');
+    if (user) {
+        let orders = JSON.parse(localStorage.getItem('vastra_orders')) || [];
+        const date = new Date().toLocaleDateString('en-GB');
+        orders.push({ id, name, image, date });
+        localStorage.setItem('vastra_orders', JSON.stringify(orders));
+        
+        window.open(link, '_blank');
+    } else {
+        window.location.href = 'login.html';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initStorefront);
