@@ -3,44 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page - VSTRA</title>
-    <link rel="stylesheet" href="login.css">
-</head>
-<body>
-
-<div class="container">
     
-    <div class="form-box active" id="loginBox">
-        <h2>Login</h2>
-        <input type="email" placeholder="Email" id="loginEmail">
-        <input type="password" placeholder="Password" id="loginPassword">
-        <button onclick="login()">Login</button>
+    <title>Login / Register | VASTRA Store</title>
+    <meta name="description" content="Sign in or create a new account on VASTRA to shop premium clothing, track orders, and save your wishlist.">
+    <meta name="author" content="Vastrawide Tech Team">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        @font-face { font-family: 'Amazon Ember'; src: local('Amazon Ember'), url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonEmber-Regular-934f0d2382743818c5483f8d227311394b87e6b0._V1_.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'Amazon Ember'; src: local('Amazon Ember Bold'), url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonEmber-Bold-7333a3648a8579471f45600557434190c4273063._V1_.woff2') format('woff2'); font-weight: 700; }
+        body { font-family: 'Amazon Ember', Arial, sans-serif; background-color: #fcfcfc; color: #111; display: flex; flex-direction: column; min-height: 100vh; }
+    </style>
+</head>
+<body class="selection:bg-gray-200 selection:text-black">
 
-        <div class="options">
-            <a href="#" onclick="showForgot()">Forgot Password?</a>
-            <a href="#" onclick="showRegister()">Register</a>
+    <nav class="bg-white border-b border-gray-200 h-16 w-full shadow-sm flex items-center justify-center">
+        <a href="index.html" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+            <div class="w-8 h-8 bg-black text-white flex items-center justify-center font-bold rounded">V</div>
+            <span class="text-xl font-bold tracking-tighter">VASTRA</span>
+        </a>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-4 py-12">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden border border-gray-100">
+            <div class="p-8 md:p-10">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold tracking-tight uppercase" id="form-title">Welcome Back</h2>
+                    <p class="text-xs text-gray-500 mt-2" id="form-subtitle">Enter your credentials to access your account.</p>
+                </div>
+
+                <form id="login-form" class="space-y-5 block">
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Email OR Phone Number</label>
+                        <input type="text" id="login-id" class="w-full border-b-2 border-gray-200 py-2 outline-none focus:border-black transition-colors" placeholder="Email or 10-digit phone" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Password</label>
+                        <input type="password" id="login-pass" class="w-full border-b-2 border-gray-200 py-2 outline-none focus:border-black transition-colors" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white py-3.5 text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-800 transition-colors shadow-md mt-6">
+                        Sign In Securely
+                    </button>
+                    <p class="text-center text-xs mt-6 text-gray-500">New to Vastra? <a href="#" onclick="toggleAuthMode()" class="font-bold text-black hover:underline">Create an Account</a></p>
+                </form>
+
+                <form id="register-form" class="space-y-4 hidden">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Full Name</label>
+                        <input type="text" id="reg-name" class="w-full border-b-2 border-gray-200 py-1.5 outline-none focus:border-black text-sm" placeholder="e.g. Aayush Kumar" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Email Address</label>
+                        <input type="email" id="reg-email" class="w-full border-b-2 border-gray-200 py-1.5 outline-none focus:border-black text-sm" placeholder="you@example.com" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Phone Number</label>
+                        <input type="tel" id="reg-phone" class="w-full border-b-2 border-gray-200 py-1.5 outline-none focus:border-black text-sm" placeholder="10-digit number" pattern="[0-9]{10}" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Password</label>
+                        <input type="password" id="reg-pass" class="w-full border-b-2 border-gray-200 py-1.5 outline-none focus:border-black text-sm" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white py-3.5 text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-800 transition-colors shadow-md mt-6">
+                        Create Account
+                    </button>
+                    <p class="text-center text-xs mt-6 text-gray-500">Already a member? <a href="#" onclick="toggleAuthMode()" class="font-bold text-black hover:underline">Sign In</a></p>
+                </form>
+            </div>
         </div>
-        <button class="google-btn">Login with Google</button>
-    </div>
+    </main>
 
-    <div class="form-box" id="registerBox">
-        <h2>Register</h2>
-        <input type="text" id="regName" placeholder="Name">
-        <input type="email" id="regEmail" placeholder="Email">
-        <input type="password" id="regPassword" placeholder="Password">
-        <button onclick="register()">Register</button>
-        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
-    </div>
+    <footer class="bg-gray-900 text-white py-8 border-t-4 border-black w-full">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 text-center md:text-left">
+            <p>&copy; 2026 VASTRA Official Store. All rights reserved.</p>
+            <p class="mt-2 md:mt-0 font-medium">Developed & Maintained by <span class="text-white font-bold tracking-widest">VASTRAWIDE TECH TEAM</span></p>
+            <p class="mt-2 md:mt-0"><a href="https://vastrawide.netlify.app" target="_blank" class="hover:text-white underline">vastrawide.netlify.app</a></p>
+        </div>
+    </footer>
 
-    <div class="form-box" id="forgotBox">
-        <h2>Forgot Password</h2>
-        <input type="email" id="forgotEmail" placeholder="Enter your Email">
-        <button onclick="resetPassword()">Reset Password</button>
-        <p><a href="#" onclick="showLogin()">Back to Login</a></p>
-    </div>
+    <div id="custom-alert-container"></div>
 
-</div>
+    <script src="js/auth.js"></script>
+    
+    <script>
+        let isLogin = true;
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+            document.getElementById('form-title').innerText = isLogin ? "Welcome Back" : "Join Vastra";
+            document.getElementById('form-subtitle').innerText = isLogin ? "Enter your credentials to access your account." : "Create your premium fashion account today.";
+        }
 
-<script src="login.js"></script>
+        // Login Logic
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button'); btn.innerText = "AUTHENTICATING..."; btn.disabled = true;
+            try {
+                const res = await fetch('https://vstra-backend.onrender.com/api/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login_id: document.getElementById('login-id').value, password: document.getElementById('login-pass').value })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    localStorage.setItem('vastra_user', JSON.stringify(data.user));
+                    if(window.vastraAlert) vastraAlert('Login Successful! Redirecting...', 'success');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+                } else { 
+                    if(window.vastraAlert) vastraAlert(data.message, 'error'); else alert(data.message);
+                }
+            } catch(err) { 
+                if(window.vastraAlert) vastraAlert("Server is offline. Please wait.", 'error'); else alert("Server offline.");
+            }
+            finally { btn.innerText = "SIGN IN SECURELY"; btn.disabled = false; }
+        });
+
+        // Register Logic
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button'); btn.innerText = "CREATING ACCOUNT..."; btn.disabled = true;
+            try {
+                const payload = {
+                    name: document.getElementById('reg-name').value,
+                    email: document.getElementById('reg-email').value,
+                    phone_number: document.getElementById('reg-phone').value,
+                    password: document.getElementById('reg-pass').value
+                };
+                const res = await fetch('https://vstra-backend.onrender.com/api/register', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    if(window.vastraAlert) vastraAlert(data.message, 'success');
+                    setTimeout(() => { toggleAuthMode(); }, 1500);
+                } else { 
+                    if(window.vastraAlert) vastraAlert(data.message, 'error'); 
+                }
+            } catch(err) { 
+                if(window.vastraAlert) vastraAlert("Server error.", 'error'); 
+            }
+            finally { btn.innerText = "CREATE ACCOUNT"; btn.disabled = false; }
+        });
+    </script>
 </body>
 </html>

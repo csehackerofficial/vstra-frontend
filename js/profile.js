@@ -1,6 +1,6 @@
 /**
  * @file profile.js
- * @description User Profile, Wishlist, and Order Logic
+ * @description User Profile, Wishlist, and Order Logic with Phone Details
  */
 
 function switchTab(tab) {
@@ -31,6 +31,9 @@ function loadProfileData() {
     const user = JSON.parse(userData);
     document.getElementById('user-name').innerText = user.name;
     document.getElementById('user-email').innerText = user.email;
+    
+    // 🌟 FIX: Show Phone Number
+    document.getElementById('user-phone').innerText = user.phone || "Not Provided";
     
     // Check if profile pic exists in localStorage
     const savedPic = localStorage.getItem(`profile_pic_${user.email}`);
@@ -118,5 +121,17 @@ function renderOrders() {
         </div>
     `).join('');
 }
+
+// 🌟 NEW: Link sidebar logout to auth.js confirmation modal
+window.handleSidebarLogout = () => {
+    // Check if triggerLogout exists in auth.js
+    if (typeof window.triggerLogout === 'function') {
+        window.triggerLogout();
+    } else {
+        // Fallback just in case
+        localStorage.removeItem('vastra_user');
+        window.location.href = 'index.html';
+    }
+};
 
 document.addEventListener('DOMContentLoaded', loadProfileData);

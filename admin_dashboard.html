@@ -1,0 +1,156 @@
+/**
+ * @file admin_dashboard.js
+ * @description Advanced Administrative Logic for VASTRA Dashboard.
+ * Features: Role Management, CSV Export, Real-time Search.
+ */
+
+let allAdminUsers = [];
+let allAdminProducts = []; 
+let allAdminSales = [];
+
+// --- TAB SWITCHING LOGIC ---
+function switchTab(tab) {
+    ['sec-users', 'sec-store', 'sec-sales'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).classList.remove('block');
+    });
+    ['btn-users', 'btn-store', 'btn-sales'].forEach(id => {
+        document.getElementById(id).classList.remove('active', 'text-black');
+    });
+
+    document.getElementById(`sec-${tab}`).classList.remove('hidden');
+    document.getElementById(`sec-${tab}`).classList.add('block');
+    const activeBtn = document.getElementById(`btn-${tab}`);
+    activeBtn.classList.add('active', 'text-black');
+
+    if (tab === 'users') loadUsers();
+    else if (tab === 'store') loadInventory();
+    else if (tab === 'sales') loadSales();
+}
+
+// ==========================================
+// 🌟 USER REGISTRY & ROLE MANAGEMENT
+// ==========================================
+
+async function loadUsers() {
+    const tableBody = document.getElementById("userTable");
+    const loader = document.getElementById("loading-users");
+    tableBody.innerHTML = ""; loader.classList.remove("hidden");
+
+    try {
+        const response = await fetch("https://vstra-backend.onrender.com/api/users");
+        if (!response.ok) throw new Error("Network response failed.");
+        allAdminUsers = await response.json();
+        loader.classList.add("hidden");
+        renderUserTable(allAdminUsers);
+    } catch (err) {
+        loader.classList.add("hidden");
+        if(window.vastraAlert) vastraAlert("Database Sync Failed. Server might be sleeping.", "error");
+    }
+}
+
+function renderUserTable(users) {
+    const tableBody = document.getElementById("userTable");
+    if (users.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-[11px] font-bold text-gray-300 uppercase">No identities found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = users.map(user => {
+        const dateObj = new Date(user.created_at);
+        const regDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const regTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        // Check Role
+        const isAdmin = user.role === 'admin';
+        const roleColor = isAdmin ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200';
+        const newRole = isAdmin ? 'user' : 'admin';
+        const actionText = isAdmin ? 'Remove Admin' : 'Make Admin';
+
+        return `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-5 px-4 font-mono text-[11px] text-gray-400">#${user.id}</td>
+                <td class="py-5 font-black uppercase tracking-tight text-gray-900">${user.name}</td>
+                <td class="py-5">
+                    <div class="font-semibold text-gray-800 text-xs">${user.email}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${user.phone_number || 'N/A'}</div>
+                </td>
+                <td class="py-5 font-semibold italic text-xs text-gray-700">${regDate} at ${regTime}</td>
+                <td class="py-5">
+                    <span class="${roleColor} border text-[9px] font-bold px-2 py-1 rounded uppercase tracking-widest">${user.role}</span>
+                </td>
+                <td class="py-5 px-4 text-right">
+                    <button onclick="toggleAdminRole(${user.id}, '${newRole}', '${user.name}')" 
+                            class="text-[9px] font-bold uppercase tracking-widest ${isAdmin ? 'text-red-500 hover:text-red-700' : 'text-blue-500 hover:text-blue-700'} underline transition-colors">
+                        ${actionText}
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 🌟 Toggle Admin Privilege with Custom UI Confirmation
+window.toggleAdminRole = (userId, newRole, userName) => {
+    const actionWord = newRole === 'admin' ? 'promote' : 'demote';
+    
+    vastraConfirm(
+        "Change User Role",
+        `Are you sure you want to ${actionWord} <b>${userName}</b> to ${newRole.toUpperCase()}?`,
+        "Confirm Change",
+        async () => {
+            try {
+                const res = await fetch(`https://vstra-backend.onrender.com/api/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: newRole })
+                });
+                
+                if (res.ok) {
+                    vastraAlert(`Successfully changed ${userName}'s role to ${newRole}.`, 'success');
+                    loadUsers(); // Reload table
+                } else {
+                    vastraAlert("Failed to update role.", "error");
+                }
+            } catch (err) {
+                vastraAlert("Network error. Try again.", "error");
+            }
+        }
+    );
+};
+
+// 🌟 Export Users to CSV
+window.downloadUserData = () => {
+    if (allAdminUsers.length === 0) { vastraAlert('No data available to download.', 'error'); return; }
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "UID,Name,Email,Phone,Role,Registration Date\n"; // Header row
+
+    allAdminUsers.forEach(user => {
+        const dateStr = new Date(user.created_at).toLocaleString();
+        const row = `${user.id},"${user.name}","${user.email}","${user.phone_number || 'N/A'}","${user.role}","${dateStr}"`;
+        csvContent += row + "\r\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "VASTRA_Users_Data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    vastraAlert("User data downloaded successfully.", "success");
+};
+
+// Live Search logic...
+document.getElementById('user-search').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query === "") { renderUserTable(allAdminUsers); return; }
+    const results = allAdminUsers.filter(u => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query) || (u.phone_number && u.phone_number.includes(query)));
+    renderUserTable(results);
+});
+
+// Boot Load
+document.addEventListener('DOMContentLoaded', () => { loadUsers(); });
+
+/* --- Note: Ensure loadInventory() and loadSales() functions from previous code are included here below this line if you split the file. --- */

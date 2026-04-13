@@ -1,13 +1,16 @@
 /**
  * @file main.js
- * @description VASTRA Store Logic.
+ * @description VASTRA Storefront Core Logic.
+ * Features: Dynamic Slider, Real-time Search, Wishlist, Orders, and Kids Category.
  */
 
 let allProducts = [];
 let currentSlide = 0;
 let sliderTimer;
 
-// --- DYNAMIC SLIDER LOGIC ---
+// ==========================================
+// 🌟 DYNAMIC HERO SLIDER LOGIC
+// ==========================================
 async function fetchBanners() {
     try {
         const res = await fetch('https://vstra-backend.onrender.com/api/banners');
@@ -50,16 +53,19 @@ function initSlider() {
     }
 
     function nextSlide() { showSlide((currentSlide + 1) % slides.length); }
-
-    window.goToSlide = (index) => {
-        showSlide(index);
-        clearInterval(sliderTimer);
-        sliderTimer = setInterval(nextSlide, 4000);
+    
+    window.goToSlide = (index) => { 
+        showSlide(index); 
+        clearInterval(sliderTimer); 
+        sliderTimer = setInterval(nextSlide, 4000); 
     };
-
+    
     sliderTimer = setInterval(nextSlide, 4000);
 }
 
+// ==========================================
+// 🌟 INVENTORY & CATEGORY RENDERING
+// ==========================================
 async function initStorefront() {
     fetchBanners();
     try {
@@ -75,17 +81,26 @@ function displayInventory(products) {
     const featuredItems = products.filter(p => (p.category || "").toLowerCase().includes('featured'));
     const menItems = products.filter(p => (p.category || "").toLowerCase().trim() === 'men');
     const womenItems = products.filter(p => (p.category || "").toLowerCase().trim() === 'women');
+    
+    // 🌟 FIX: Added Kids Category Logic
+    const kidsItems = products.filter(p => (p.category || "").toLowerCase().trim() === 'kids');
 
     renderProductGrid('featured-grid', featuredItems);
     renderProductGrid('men-grid', menItems);
     renderProductGrid('women-grid', womenItems);
+    renderProductGrid('kids-grid', kidsItems); // Render Kids
 }
 
 function renderProductGrid(id, products) {
     const grid = document.getElementById(id);
     if (!grid) return; 
 
-    // 🌟 FIX: Updated Buttons (Save to Left, Buy Now smaller to Right)
+    if (products.length === 0) {
+        grid.innerHTML = `<p class="text-xs text-gray-400 col-span-full pb-8">New collection dropping soon...</p>`;
+        return;
+    }
+
+    // 🌟 FIX: Added 'event' parameter in saveToWishlist to change icon on click
     grid.innerHTML = products.map(p => `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100 cursor-pointer" onclick="handlePurchase('${p.purchase_link}', ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}')">
@@ -96,12 +111,12 @@ function renderProductGrid(id, products) {
             <p class="font-bold text-xs mb-3">₹${p.price} <span class="text-[9px] text-gray-400 line-through ml-1">₹${p.mrp || 0}</span></p>
             
             <div class="flex gap-2">
-                <button onclick="saveToWishlist(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}', '${p.price}')" title="Save to Wishlist"
-                        class="w-1/4 py-2 bg-white text-black border border-black text-sm flex justify-center items-center hover:bg-gray-100 transition-all">
+                <button onclick="saveToWishlist(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}', '${p.price}', event)" title="Save to Wishlist"
+                        class="w-1/4 py-2 bg-white text-black border border-black text-sm flex justify-center items-center hover:bg-gray-100 transition-all rounded-sm shadow-sm">
                     <i class="ri-bookmark-line"></i>
                 </button>
                 <button onclick="handlePurchase('${p.purchase_link}', ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image_url}')" 
-                        class="w-3/4 py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-sm">
+                        class="w-3/4 py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-sm shadow-md">
                     Buy Now
                 </button>
             </div>
@@ -109,6 +124,9 @@ function renderProductGrid(id, products) {
     `).join('');
 }
 
+// ==========================================
+// 🌟 SEARCH, WISHLIST & ORDERS
+// ==========================================
 window.handleSearch = (e) => {
     const query = e.target.value.toLowerCase().trim();
     const storefront = document.getElementById('storefront-content');
@@ -122,24 +140,32 @@ window.handleSearch = (e) => {
 
 window.clearSearch = () => { document.getElementById('searchInput').value = ""; document.getElementById('storefront-content').classList.remove('hidden'); document.getElementById('search-info').classList.add('hidden'); };
 
-// 🌟 NEW: Wishlist Save Logic
-window.saveToWishlist = (id, name, image, price) => {
+// 🌟 FIX: Use Custom Alert instead of standard browser alert()
+window.saveToWishlist = (id, name, image, price, event) => {
     const user = localStorage.getItem('vastra_user');
     if (!user) { window.location.href = 'login.html'; return; }
     
     let wishlist = JSON.parse(localStorage.getItem('vastra_wishlist')) || [];
     const exists = wishlist.find(item => item.id === id);
+    
     if (!exists) {
         wishlist.push({ id, name, image, price });
         localStorage.setItem('vastra_wishlist', JSON.stringify(wishlist));
-        alert('Product added to Wishlist!');
+        
+        // Show Pro-Alert
+        if (window.vastraAlert) vastraAlert('Product saved to your Wishlist!', 'success');
+        else alert('Product added to Wishlist!');
+        
+        // Change icon to filled
+        if (event && event.currentTarget) {
+            event.currentTarget.innerHTML = `<i class="ri-bookmark-fill text-black"></i>`;
+        }
     } else {
-        alert('Product is already in your Wishlist!');
+        if (window.vastraAlert) vastraAlert('Product is already in your Wishlist!', 'info');
+        else alert('Product is already in your Wishlist!');
     }
-    event.currentTarget.innerHTML = `<i class="ri-bookmark-fill text-black"></i>`;
 };
 
-// 🌟 NEW: Order Tracking Logic
 window.handlePurchase = (link, id, name, image) => {
     const user = localStorage.getItem('vastra_user');
     if (user) {
