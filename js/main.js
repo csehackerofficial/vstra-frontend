@@ -1,7 +1,7 @@
 /**
  * @file main.js
  * @description VASTRA Storefront Master Logic (Fully Cloud Integrated).
- * Fix: Smart Category Filtering for "Men" and "Women".
+ * Fix: Smart Category Filtering & Discount Percentage Calculation.
  */
 
 let allProducts = [];
@@ -106,20 +106,24 @@ function renderProductGrid(id, products) {
     }
 
     grid.innerHTML = products.map(p => {
-        const discount = p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+        // 🌟 FIX: Parse strings to numbers for accurate discount calculation
+        const priceNum = parseFloat(p.price) || 0;
+        const mrpNum = parseFloat(p.mrp) || 0;
+        
+        const discount = (mrpNum > priceNum) ? Math.round(((mrpNum - priceNum) / mrpNum) * 100) : 0;
         
         return `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all bg-white relative">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100 cursor-pointer" 
                  onclick="handlePurchase('${p.purchase_link}', ${p.id})">
                 <img src="${p.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
-                ${discount > 0 ? `<div class="absolute top-2 left-2 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">-${discount}% OFF</div>` : ''}
+                ${discount > 0 ? `<div class="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded shadow-md z-10">-${discount}% OFF</div>` : ''}
             </div>
             
             <h3 class="text-[10px] font-bold uppercase truncate mb-1 text-gray-800">${p.name}</h3>
             <div class="flex items-baseline gap-2 mb-3">
-                <p class="font-black text-xs">₹${p.price}</p>
-                <p class="text-[9px] text-gray-400 line-through">₹${p.mrp || 0}</p>
+                <p class="font-black text-xs">₹${priceNum}</p>
+                <p class="text-[9px] text-gray-400 line-through">₹${mrpNum}</p>
             </div>
             
             <div class="flex gap-2">
