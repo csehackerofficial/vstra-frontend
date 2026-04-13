@@ -1,7 +1,7 @@
 /**
  * @file main.js
  * @description VASTRA Storefront Master Logic (Fully Cloud Integrated).
- * Fix: Category Conflict (Women's items appearing in Men's section).
+ * Fix: Smart Category Filtering for "Men" and "Women".
  */
 
 let allProducts = [];
@@ -62,7 +62,7 @@ function initSlider() {
 }
 
 // ==========================================
-// 🌟 INVENTORY & CATEGORY RENDERING (STRICT FIX)
+// 🌟 INVENTORY & CATEGORY RENDERING (SMART FILTER)
 // ==========================================
 async function initStorefront() {
     fetchBanners();
@@ -74,13 +74,21 @@ async function initStorefront() {
 }
 
 function displayInventory(products) {
-    // 🌟 Master Fix: Using Exact String Matching instead of .includes()
-    // This prevents "Women's Fashion" from appearing in "Men's Fashion"
+    // 🌟 SMART FILTER LOGIC
+    // Featured Items
+    const featuredItems = products.filter(p => (p.category || "").toLowerCase().includes('featured'));
     
-    const featuredItems = products.filter(p => (p.category || "").trim() === "Featured");
-    const menItems = products.filter(p => (p.category || "").trim() === "Men's Fashion");
-    const womenItems = products.filter(p => (p.category || "").trim() === "Women's Fashion");
-    const kidsItems = products.filter(p => (p.category || "").trim() === "Kids' Collection");
+    // Men's Items: Includes "men" but explicitly Excludes "women"
+    const menItems = products.filter(p => {
+        const cat = (p.category || "").toLowerCase();
+        return (cat.includes('men') || cat === 'men') && !cat.includes('women');
+    });
+
+    // Women's Items: Includes "women"
+    const womenItems = products.filter(p => (p.category || "").toLowerCase().includes('women'));
+
+    // Kids' Items
+    const kidsItems = products.filter(p => (p.category || "").toLowerCase().includes('kids'));
 
     renderProductGrid('featured-grid', featuredItems);
     renderProductGrid('men-grid', menItems);

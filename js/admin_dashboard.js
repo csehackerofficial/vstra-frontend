@@ -97,7 +97,7 @@ function renderUserTable(users) {
             <td class="py-4 font-black uppercase tracking-tight text-gray-900">${user.name}</td>
             <td class="py-4 text-xs font-semibold text-gray-700">${user.email}</td>
             <td class="py-4 text-[10px] font-bold text-gray-500">${user.phone_number || 'N/A'}</td>
-            <td class="py-4 px-6"><span class="bg-black text-white text-[9px] font-bold px-2 py-1 rounded uppercase">${user.role}</span></td>
+            <td class="py-4 px-6"><span class="bg-black text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-widest">${user.role}</span></td>
         </tr>`).join('');
     container.innerHTML = `<table class="w-full text-left border-collapse"><tbody>${rows}</tbody></table>`;
 }
@@ -156,8 +156,23 @@ window.editProduct = (id) => {
     
     document.getElementById('p-name').value = p.name;
     document.getElementById('p-price').value = p.price;
-    document.getElementById('p-mrp').value = p.mrp;
-    document.getElementById('p-cat').value = p.category;
+    document.getElementById('p-mrp').value = p.mrp || '';
+    
+    // 🌟 STRICT CATEGORY MATCHING (Must match the <select> options in HTML)
+    const categorySelect = document.getElementById('p-cat');
+    let categoryFound = false;
+    for (let i = 0; i < categorySelect.options.length; i++) {
+        if (categorySelect.options[i].value === p.category) {
+            categorySelect.selectedIndex = i;
+            categoryFound = true;
+            break;
+        }
+    }
+    // If somehow a weird category is saved, default to the first one
+    if(!categoryFound && categorySelect.options.length > 0) {
+        categorySelect.selectedIndex = 0; 
+    }
+
     document.getElementById('p-img').value = p.image_url;
     document.getElementById('p-link').value = p.purchase_link;
     
@@ -175,7 +190,7 @@ window.saveProduct = async (e) => {
         name: document.getElementById('p-name').value,
         price: document.getElementById('p-price').value,
         mrp: document.getElementById('p-mrp').value || 0,
-        category: document.getElementById('p-cat').value,
+        category: document.getElementById('p-cat').value, // This will now perfectly match
         image_url: document.getElementById('p-img').value,
         purchase_link: document.getElementById('p-link').value
     };
@@ -194,6 +209,8 @@ window.saveProduct = async (e) => {
             toggleModal('productModal', false); 
             loadInventory(); 
             alert(editingProductId ? "Success: Product Updated!" : "Success: New Product Added!");
+        } else {
+            alert("Error: Server responded with failure.");
         }
     } catch (err) { alert("Server connectivity error."); }
     finally { btn.innerText = originalText; btn.disabled = false; }
@@ -219,7 +236,7 @@ async function loadBanners() {
                     <button onclick="editBanner(${b.id})" class="bg-white text-blue-600 p-2 rounded-full shadow hover:scale-110 transition-transform"><i class="ri-edit-box-line text-xl"></i></button>
                     <button onclick="deleteBanner(${b.id})" class="bg-white text-red-600 p-2 rounded-full shadow hover:scale-110 transition-transform"><i class="ri-delete-bin-line text-xl"></i></button>
                 </div>
-                <div class="absolute top-2 left-2 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black">PRIORITY: ${b.priority_number}</div>
+                <div class="absolute top-2 left-2 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black tracking-widest">PRIORITY: ${b.priority_number}</div>
             </div>`).join('');
     } catch (err) { console.error(err); }
 }
@@ -291,7 +308,7 @@ window.deleteBanner = async (id) => {
 
 async function loadSales() {
     const container = document.getElementById('sales-list');
-    container.innerHTML = `<p class="p-10 text-center text-[10px] uppercase font-bold text-gray-400">Loading Order History...</p>`;
+    container.innerHTML = `<p class="p-10 text-center text-[10px] uppercase font-bold text-gray-400 animate-pulse">Loading Order History...</p>`;
     try {
         const res = await fetch(`${API_BASE}/admin/sales`);
         allAdminSales = await res.json();
