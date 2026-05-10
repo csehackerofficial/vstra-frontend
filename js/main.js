@@ -1,7 +1,7 @@
 /**
  * @file main.js
- * @description VASTRA Storefront Master Logic (Fully Cloud Integrated).
- * Fix: Smart Category Filtering & Discount Percentage Calculation.
+ * @description VASTRA Storefront Master Logic (Fully Cloud Integrated + Amazon Affiliate).
+ * Fix: Smart Category Filtering, Discount Calc & Amazon Live API Integration.
  */
 
 let allProducts = [];
@@ -75,19 +75,14 @@ async function initStorefront() {
 
 function displayInventory(products) {
     // 🌟 SMART FILTER LOGIC
-    // Featured Items
     const featuredItems = products.filter(p => (p.category || "").toLowerCase().includes('featured'));
     
-    // Men's Items: Includes "men" but explicitly Excludes "women"
     const menItems = products.filter(p => {
         const cat = (p.category || "").toLowerCase();
         return (cat.includes('men') || cat === 'men') && !cat.includes('women');
     });
 
-    // Women's Items: Includes "women"
     const womenItems = products.filter(p => (p.category || "").toLowerCase().includes('women'));
-
-    // Kids' Items
     const kidsItems = products.filter(p => (p.category || "").toLowerCase().includes('kids'));
 
     renderProductGrid('featured-grid', featuredItems);
@@ -106,16 +101,15 @@ function renderProductGrid(id, products) {
     }
 
     grid.innerHTML = products.map(p => {
-        // 🌟 FIX: Parse strings to numbers for accurate discount calculation
         const priceNum = parseFloat(p.price) || 0;
         const mrpNum = parseFloat(p.mrp) || 0;
-        
         const discount = (mrpNum > priceNum) ? Math.round(((mrpNum - priceNum) / mrpNum) * 100) : 0;
         
+        // 🚨 HACKER FIX: Added quotes around ${p.id} so Amazon ASINs don't break JavaScript
         return `
         <div class="group border border-transparent hover:border-gray-100 p-2 transition-all bg-white relative">
             <div class="aspect-[3/4] bg-gray-50 mb-3 overflow-hidden relative border border-gray-100 cursor-pointer" 
-                 onclick="handlePurchase('${p.purchase_link}', ${p.id})">
+                 onclick="handlePurchase('${p.purchase_link}', '${p.id}')">
                 <img src="${p.image_url}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500">
                 ${discount > 0 ? `<div class="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded shadow-md z-10">-${discount}% OFF</div>` : ''}
             </div>
@@ -127,11 +121,11 @@ function renderProductGrid(id, products) {
             </div>
             
             <div class="flex gap-2">
-                <button onclick="saveToWishlist(${p.id}, event)" title="Save to Wishlist"
+                <button onclick="saveToWishlist('${p.id}', event)" title="Save to Wishlist"
                         class="w-1/4 py-2 border border-black flex justify-center items-center hover:bg-gray-100 transition-all rounded-sm">
                     <i class="ri-bookmark-line"></i>
                 </button>
-                <button onclick="handlePurchase('${p.purchase_link}', ${p.id})" 
+                <button onclick="handlePurchase('${p.purchase_link}', '${p.id}')" 
                         class="w-3/4 py-2 bg-black text-white text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-sm shadow-md">
                     Buy Now
                 </button>
@@ -141,7 +135,58 @@ function renderProductGrid(id, products) {
 }
 
 // ==========================================
-// 🌟 DATABASE WISHLIST & ORDERS
+// 🌟 DYNAMIC SEARCH (LIVE AMAZON API + LOADER)
+// ==========================================
+let searchTimeout;
+
+window.handleSearch = (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    const searchGrid = document.getElementById('search-results-grid');
+    const storefront = document.getElementById('storefront-content');
+    const searchInfo = document.getElementById('search-info');
+
+    if (query.length === 0) { 
+        clearSearch(); 
+        return; 
+    }
+
+    storefront.classList.add('hidden'); 
+    searchInfo.classList.remove('hidden'); 
+    
+    // 🌟 Show Awesome Hacker Loader
+    searchGrid.innerHTML = `
+        <div class="col-span-full flex flex-col items-center justify-center py-12">
+            <div class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 animate-pulse mt-2">Hunting Best Prices on Amazon...</p>
+        </div>`;
+
+    // 🌟 API Call with Debounce (1 second delay to save API limits)
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`${API_BASE}/search-live?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
+            if (data.success && data.products && data.products.length > 0) {
+                renderProductGrid('search-results-grid', data.products);
+            } else {
+                searchGrid.innerHTML = `<p class="text-xs text-gray-400 col-span-full pb-8 italic text-center">No products found for "${query}" on Amazon.</p>`;
+            }
+        } catch (err) {
+            console.error("Live Search Failed", err);
+            searchGrid.innerHTML = `<p class="text-xs text-red-400 col-span-full pb-8 italic text-center">Connection Error. Please try again.</p>`;
+        }
+    }, 1000); 
+};
+
+window.clearSearch = () => { 
+    document.getElementById('searchInput').value = ""; 
+    document.getElementById('storefront-content').classList.remove('hidden'); 
+    document.getElementById('search-info').classList.add('hidden'); 
+};
+
+// ==========================================
+// 🌟 DATABASE WISHLIST & ORDERS (WITH AMAZON FIX)
 // ==========================================
 window.saveToWishlist = async (productId, event) => {
     const user = JSON.parse(localStorage.getItem('vastra_user'));
@@ -150,8 +195,15 @@ window.saveToWishlist = async (productId, event) => {
         return; 
     }
     
-    const icon = event.currentTarget.querySelector('i');
+    // 🚨 Amazon API Protection: Prevent saving ASIN string to local MySQL Database
+    const isLocalProduct = !isNaN(productId); 
+    if (!isLocalProduct) {
+        if (window.vastraAlert) vastraAlert('Live Amazon products cannot be added to local wishlist.', 'info');
+        else alert("Live Amazon products cannot be added to local wishlist.");
+        return;
+    }
 
+    const icon = event.currentTarget.querySelector('i');
     try {
         const res = await fetch(`${API_BASE}/wishlist`, {
             method: 'POST',
@@ -173,7 +225,14 @@ window.saveToWishlist = async (productId, event) => {
 
 window.handlePurchase = async (link, productId) => {
     const user = JSON.parse(localStorage.getItem('vastra_user'));
-    if (user) {
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // 🚨 Amazon API Protection: Only log local DB orders. Skip if it's an Amazon ASIN.
+    const isLocalProduct = !isNaN(productId);
+    if (isLocalProduct) {
         try {
             await fetch(`${API_BASE}/orders`, {
                 method: 'POST',
@@ -181,26 +240,11 @@ window.handlePurchase = async (link, productId) => {
                 body: JSON.stringify({ email: user.email, product_id: productId })
             });
         } catch (e) { console.log("Order log skipped"); }
-        window.open(link, '_blank');
     } else {
-        window.location.href = 'login.html';
+        console.log("VASTRA: Live Amazon Product Clicked. Affiliate Link Triggered!");
     }
-};
-
-window.handleSearch = (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (query.length > 0) {
-        const results = allProducts.filter(p => (p.name && p.name.toLowerCase().includes(query)) || (p.category && p.category.toLowerCase().includes(query)));
-        document.getElementById('storefront-content').classList.add('hidden'); 
-        document.getElementById('search-info').classList.remove('hidden'); 
-        renderProductGrid('search-results-grid', results);
-    } else { clearSearch(); }
-};
-
-window.clearSearch = () => { 
-    document.getElementById('searchInput').value = ""; 
-    document.getElementById('storefront-content').classList.remove('hidden'); 
-    document.getElementById('search-info').classList.add('hidden'); 
+    
+    window.open(link, '_blank');
 };
 
 document.addEventListener('DOMContentLoaded', initStorefront);
